@@ -15,11 +15,14 @@ HTML files incorporating results of the passed or failed examples/tests.
 
 ### Preparation
 
-Add a dependency on this project, e.g. with `deps.edn`:
+Add a dependency on this project:
 
 ```
-clj-concordion {:git/url https://github.com/holyjak/clj-concordion
-                :sha "<TODO>"}
+[clj-concordion "0.0.1"]
+```
+
+```
+clj-concordion {:mvn/version "0.0.1"}
 ```
 
 and configure your tests so that the test namespaces are compiled
