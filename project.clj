@@ -1,8 +1,8 @@
 (defproject clj-concordion "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
-  :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
-            :url "https://www.eclipse.org/legal/epl-2.0/"}
+  :description "clojure.test integration for https://concordion.org"
+  :url "https://github.com/holyjak/clj-concordion"
+  :license {:name "Unlicense"
+            :url "https://choosealicense.com/licenses/unlicense/"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  ;; Added here for IntelliJ's sake:
                  [org.concordion/concordion "2.2.0"]]

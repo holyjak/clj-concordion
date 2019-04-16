@@ -1,67 +1,100 @@
 # clj-concordion
 
-Proof of Concept of writing Specification By Example tests using
-[Concordion](https://concordion.org/) and implementing them using Clojure and `clojure.test`.
+Add support for Clojure and `clojure.test` to  [Concordion](https://concordion.org/),
+a Specification By Example tool.
 
 With Concordion, you can write high-level specification of features in Markdown
 and document them with examples. Hidden instrumentation (in the form of magic links)
-binds the examples to functions in your Fixture classes making it possible to run
-the tests. When you run your tests, Concordion does generate HTML files incorporating 
-results of the passed or failed examples/tests.
+binds the examples to functions in your Fixture classes making it possible to verify
+them against the code. When you run your test runner, Concordion does generate 
+HTML files incorporating results of the passed or failed examples/tests.
 
 ![](https://concordion.org/img/how-it-works-markdown.png)
 
 ## Usage
 
-`lein with-profile auto test`
+### Preparation
+
+Add a dependency on this project, e.g. with `deps.edn`:
+
+```
+clj-concordion {:git/url https://github.com/holyjak/clj-concordion
+                :sha "<TODO>"}
+```
+
+and configure your tests so that the test namespaces are compiled
+(which is necessary since we need to generate fixture classes). With lein:
+
+```clojure
+;; project.clj
+(defproject ...
+  :profiles {:test {:aot [mypapp.core-test] }} ;; Or a RegExp for all fixture test namespaces
+)
+```
+
+### Coding
+
+Given the Concordion specification `<class path>/math/Addition.md` containing:
+
+```markdown
+Adding [1](- "#n1") and [3](- "#n2") yields [4](- "?=add(#n1, #n2)").
+```
+
+you need to implement the function in a test namespace and create the fixture for it:
+
+```clojure
+(ns mypapp.core-test
+  (:require
+      [clj-concordion.core :as conc]))
+
+;; The arguments and return values must by type-hinted using one of the types
+;; supported by Concordion: Integer, boolean, or (default) String. If no type 
+;; hint is provided at some place, String is assumed.
+(defn ^Integer add [^Integer n1, ^Integer n2]
+  (int (+ n1 n2)))
+
+;; Create the fixture class and clojure.test test, passing it the function(s)
+;; Notice that the name of the class corresponds to the path to the specification
+;; .md (plus the optional "Fixture")
+;; You can have one or more fixtures in one namespace and the name of the 
+;; namespace plays no role
+(conc/deffixture "math.AdditionFixture" [add])
+```
+
+And run it:
+
+```bash
+$ lein with-profile auto test
+Compiling mypapp.core-test
+
+lein test mypapp.core-test
+
+file:///var/folders/kg/r_8ytg7x521cvlmz_47t2rgc0000gn/T/concordion/math/Addition.html
+Successes: 1, Failures: 0
+
+Ran 1 tests containing 0 assertions.
+0 failures, 0 errors.
+```
 
 ## Gotchas 
 
-1. You need to run `lein clean` if you change/rename the generated class 
- (lein doesn't detect it and won't compile it again)
+1. You need to run `lein clean` if you change/rename the fixture
+   so that the class will be recompiled
 
 ## Status
 
-Work in progress. Currently we have a spec and a corresponding fixture created in a Clojure namespace and can run it with `lein test`. But the integration is very manual now.
+Very alpha, `concordion:run` not supported yet, certainly many corner cases
+that fail. See the TODO below. 
 
-## Battle plan
+## TODO
 
-We want to be able to do something like
-
-```clojure
-;; Example: Adding [1](- "#n1") and [3](- "#n2") yields [4](- "?=add(#n1, #n2)").
-(deffixture 
-  (add [n1 n2]
-    (+ n1 n2)))
-```
-
-which would translate into
-
-```clojure
-(gen-class
-  :name "<ns>.Fixture"
-  :methods [[add [Integer Integer] Integer]])
-
-(defn -add [_ n1 n2]
-  (int (+ n1 n2)))
-
-
-(deftest concordion
-  (run-via-concordion (<ns>.Fixture.)))
-  
-;; In a support library:
-(defn run-via-concordion [fixture]
-    (let [fixture-meta (doto (FixtureInstance. fixture)
-                         (.beforeSpecification)
-                         (.setupForRun fixture))]
-        (.run
-          (FixtureRunner. fixture-meta (ClassNameBasedSpecificationLocator.))
-          fixture-meta)
-        (.afterSpecification fixture-meta)))
-```
-
-### TODO
-
+* Add support for the `concordion:run` command so that specs linked from a page
+  are run automatically for it as well
+* The `org.concordion.internal.FixtureRunner.run(org.concordion.api.Fixture)` we
+  use is deprecated, we should use `(String example, Fixture fixture)` instead
+* Support also ^long, not just int (converting to int underneath)
+* In the generated test, add an assertion to check that output from concordion was OK
+  so that also clojure.test output shows correctly failed/passed.
 * Re-run tests also when the .md files changes - add the resources/ to the watch path
 
 ## Implementation
@@ -76,7 +109,6 @@ Clojure-friendly, we need to use `gen-class` to create a class and object matchi
 OGNL's / Concordion's expectations.
 
 The current implementation is based on JUnit3 ConcordionTestCase. 
-`concordion:run` isn't supported yet.
 
 > There's 2 places where the test runner is called:
   

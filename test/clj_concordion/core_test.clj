@@ -1,42 +1,23 @@
 (ns clj-concordion.core-test
   (:require
+    [clj-concordion.core :as conc]
     [clojure.test :refer :all]
-    [io.aviso.repl :refer [install-pretty-exceptions]])
-  (:import
-    org.concordion.api.Fixture
-    [org.concordion.internal ClassNameBasedSpecificationLocator
-                             FixtureInstance
-                             FixtureRunner]))
-
+    [io.aviso.repl :refer [install-pretty-exceptions]]))
 
 (install-pretty-exceptions)
 
-(gen-class
-  :name "math.AdditionFixture"
-  :methods [[add [Integer Integer] Integer]
-            [subtract [Integer Integer] Integer]])
-
-(defn -add
+(defn ^Integer add
   "Called by Concordion"
-  [_ n1 n2]
+  [^Integer n1, ^Integer n2]
   (int (+ n1 n2)))
 
-(defn -subtract
+(defn ^Integer subtract
   "Called by Concordion"
-  [_ n1 n2]
+  [^Integer n1, ^Integer n2]
   (int (- n1 n2)))
 
-(defn run-fixture [fixture]
-  (let [fixture-meta (doto (FixtureInstance. fixture)
-                       (.beforeSpecification)
-                       (.setupForRun fixture))]
-    (.run
-      (FixtureRunner.
-        fixture-meta
-        (ClassNameBasedSpecificationLocator.))
-      fixture-meta)
-    (.afterSpecification fixture-meta)))
+(conc/deffixture
+  "math.AdditionFixture"
+  [add subtract])
 
 
-(deftest concordion
-  (run-fixture (math.AdditionFixture.)))
