@@ -17,12 +17,14 @@ HTML files incorporating results of the passed or failed examples/tests.
 
 Add a dependency on this project:
 
+[![Clojars Project](https://img.shields.io/clojars/v/clj-concordion.svg)](https://clojars.org/clj-concordion)
+
 ```
-[clj-concordion "0.0.1"]
+[clj-concordion "0.0.2"]
 ```
 
 ```
-clj-concordion {:mvn/version "0.0.1"}
+clj-concordion {:mvn/version "0.0.2"}
 ```
 
 and configure your tests so that the test namespaces are compiled
@@ -86,13 +88,10 @@ Ran 1 tests containing 0 assertions.
 
 ## Status
 
-Very alpha, `concordion:run` not supported yet, certainly many corner cases
-that fail. See the TODO below. 
+Alpha. Core features supported but there are certainly many rough corners and lurking bugs.
 
 ## TODO
 
-* Add support for the `concordion:run` command so that specs linked from a page
-  are run automatically for it as well
 * The `org.concordion.internal.FixtureRunner.run(org.concordion.api.Fixture)` we
   use is deprecated, we should use `(String example, Fixture fixture)` instead
 * Support also ^long, not just int (converting to int underneath)
