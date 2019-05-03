@@ -13,6 +13,8 @@ HTML files incorporating results of the passed or failed examples/tests.
 
 ## Usage
 
+Docs: [![cljdoc badge](https://cljdoc.org/badge/clj-concordion/clj-concordion)](https://cljdoc.org/d/clj-concordion/clj-concordion/CURRENT)
+
 ### Preparation
 
 Add a dependency on this project (copy the [latest dependency specification for Lein/Boot/deps.edn/Gradle/Maven from Clojars](https://clojars.org/clj-concordion)):
