@@ -8,7 +8,7 @@
                              FixtureRunner]
     (org.concordion.api Resource)))
 
-(defn before-suite [fix-inst suite?]
+(defn- before-suite [fix-inst suite?]
   (when suite?
     (.beforeSuite fix-inst)))
 
@@ -34,10 +34,10 @@
         (.afterSuite fixture-meta)))
     result))
 
-(defn drop-file-suffix [path]
+(defn- drop-file-suffix [path]
   (subs path 0 (.lastIndexOf path ".")))
 
-(defn find-fixture-class [^Resource resource ^String href]
+(defn- find-fixture-class [^Resource resource ^String href]
   ;; See DefaultConcordionRunner.findTestClass
   (let [base-name (-> resource
                       (.getParent)
@@ -89,20 +89,24 @@
          (run-fixture (new ~(symbol class-name)) true)))))
 
 (defmacro deffixture
-  "Create a fixture object for a Concordion specification, exposing the functions used in the spec.,
+  "Create a fixture object for a Concordion specification, exposing the functions needed by it,
    and a clojure.test test to execute the specification.
 
    Params:
      - name - a package-prefixed name of the generated fixture class, optionally ending in Fixture (symbol or string)
-              The name is also used to find the specification .md/.html file.
-     - methods - a vector of 1+ functions that will be exposed as methods on the fixture object
-               The function parameters and return value may be type-hinted as ^int or ^bool,
-               the default being String (the only 3 types supported by Concordion).
+              The name is also used to find the specification .md/.html file, just as in
+              a Java/JUnit-based Concordion instrumentation.
+     - methods - a vector of 1+ functions that will be exposed as methods on the fixture object.
+               The function parameters and return value may be type-hinted as `^int` or `^bool`,
+               the default being `^String` (the only 3 types supported by Concordion).
 
    Example:
-     Given the spec math/Addition.md with 'yields [4](- \"?=add(#n1, #n2)\")'
-     Implement `(defn ^int add [^int n1, ^int n2] (+ n1 n2)` and expose it to the spec.:
-     `(deffixture math.AdditionFixture [add])`"
+     Given the spec math/Addition.md with `yields [4](- \"?=add(#n1, #n2)\")`
+     write `(defn ^int add [^int n1, ^int n2] (+ n1 n2)` and expose it to the spec. with:
+     `(deffixture math.AdditionFixture [add])`.
+
+   See [concordion instrumenting](https://concordion.org/instrumenting/java/markdown/) and
+   [coding docs](https://concordion.org/coding/java/markdown/) for more details."
   [name methods]
   (deffixture* name (map resolve methods)))
 
