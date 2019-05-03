@@ -90,6 +90,10 @@ Ran 1 tests containing 0 assertions.
 
 Alpha. Core features supported but there are certainly many rough corners and lurking bugs.
 
+## Changelog
+
+[See CHANGELOG.md](./CHANGELOG.md).
+
 ## TODO
 
 * The `org.concordion.internal.FixtureRunner.run(org.concordion.api.Fixture)` we
@@ -117,6 +121,17 @@ The current implementation is based on JUnit3 ConcordionTestCase.
 > Directly when invoking a test - eg. the JUnit4 ConcordionRunner, the JUnit3 ConcordionTestCase. These call FixtureRunner which calls ConcordionBuilder. You're likely to want to create something similar to ConcordionTestCase and FixtureRunner, then reuse ConcordionBuilder - eg, see Mark Derricutt's basic TestNG runner. This was created way back for Concordion 1.3.1 - you'll need to implement the Fixture and FixtureDeclarations interfaces from Concordion 2.0.0 onwards.
 >
 > Indirectly, from a Concordion Suite, when the concordion:run command is encountered in a specification, spawning a new test within a test. If you want to support the concordion:run command, this is where the Runner / DefaultConcordionRunner comes in. By default ConcordionBuilder plugs in a SystemPropertiesRunnerFactory which lets you override the Runner with a system property. If this doesn't suit, we could open up withRunnerFactory as an extension method - rather than overriding RunStrategy which is designed to cater for different strategies for invoking the Runner.
+
+## Development
+
+### Deployment
+
+```
+# Ensure credentials unlocked
+gpg --quiet --batch --decrypt ~/.lein/credentials.clj.gpg
+# Deploy
+lein deploy clojars
+```
 
 ## License
 
