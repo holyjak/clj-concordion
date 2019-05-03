@@ -15,17 +15,9 @@ HTML files incorporating results of the passed or failed examples/tests.
 
 ### Preparation
 
-Add a dependency on this project:
+Add a dependency on this project (copy the [latest dependency specification for Lein/Boot/deps.edn/Gradle/Maven from Clojars](https://clojars.org/clj-concordion)):
 
 [![Clojars Project](https://img.shields.io/clojars/v/clj-concordion.svg)](https://clojars.org/clj-concordion)
-
-```
-[clj-concordion "0.0.2"]
-```
-
-```
-clj-concordion {:mvn/version "0.0.2"}
-```
 
 and configure your tests so that the test namespaces are compiled
 (which is necessary since we need to generate fixture classes). With lein:
