@@ -1,12 +1,16 @@
 (ns clj-concordion.core
   (:require
     [clj-concordion.internal.utils :refer :all]
-    [clojure.string :as str]
     [clojure.test :as test])
   (:import
     [org.concordion.internal ClassNameBasedSpecificationLocator
                              FixtureInstance
-                             FixtureRunner]))
+                             FixtureRunner]
+    (org.concordion.api Resource)))
+
+(defn before-suite [fix-inst suite?]
+  (when suite?
+    (.beforeSuite fix-inst)))
 
 (defn run-fixture
   "Test a Concordion specification using the given fixture object
@@ -14,34 +18,67 @@
   The specification file is found on the classpath based on the name
   of the fixture's class.
   "
-  [^Object fixture]
+  [^Object fixture suite?]
   (let [fixture-meta (doto (FixtureInstance. fixture)
+                       (before-suite suite?)
                        (.beforeSpecification)
-                       (.setupForRun fixture))]
-    (.run
-      (FixtureRunner.
-        fixture-meta
-        (ClassNameBasedSpecificationLocator.))
-      fixture-meta)
-    (.afterSpecification fixture-meta)))
+                       (.setupForRun fixture))
+        result (.run
+                 (FixtureRunner.
+                   fixture-meta
+                   (ClassNameBasedSpecificationLocator.))
+                 fixture-meta)]
+    (do
+      (.afterSpecification fixture-meta)
+      (when suite?
+        (.afterSuite fixture-meta)))
+    result))
 
-(defn- starts-with? [prefix sym]
-  (-> sym name (str/starts-with? prefix)))
+(defn drop-file-suffix [path]
+  (subs path 0 (.lastIndexOf path ".")))
+
+(defn find-fixture-class [^Resource resource ^String href]
+  ;; See DefaultConcordionRunner.findTestClass
+  (let [base-name (-> resource
+                      (.getParent)
+                      (.getRelativeResource href)
+                      (.getPath)
+                      (.replaceFirst "/" "")
+                      (.replace "/" ".")
+                      (drop-file-suffix))
+        variants (map
+                   #(str base-name %)
+                   [nil "Test" "Fixture"])]
+    (some
+      #(try
+         (Class/forName %)
+         (catch ClassNotFoundException _ nil))
+      variants)))
+
+(defrecord ClojureTestRunner []
+  org.concordion.api.Runner
+  ;; ResultSummary execute(Resource resource, String href) throws Exception;
+  (execute [_ resource href]
+    (run-fixture
+      (.newInstance (find-fixture-class resource href))
+      ;; Concordion runs before/after suite only for top pages, not those referenced via concordion:run
+      false)))
 
 (defn- deffixture*
   [name methods]
   {:pre [(or (symbol? name) (string? name))
          (sequential? methods)
          (every? var? methods)]}
+
   (let [class-name (clojure.core/name name)
         prefix (str (.replaceAll class-name "\\." "-") "-")
-        methods*  (->> methods
-                       (map var->method-descr)
-                       (mapv (juxt :namesym :args :ret)))
+        methods* (->> methods
+                      (map var->method-descr)
+                      (mapv (juxt :namesym :args :ret)))
         ;; implementation functions for the methods:
-        defns     (map
-                    (partial ->defn prefix)
-                    methods)]
+        defns (map
+                (partial ->defn prefix)
+                methods)]
     `(do
        ~@defns
        (gen-class
@@ -68,3 +105,7 @@
      `(deffixture math.AdditionFixture [add])`"
   [name methods]
   (deffixture* name (map resolve methods)))
+
+(do
+  ;; Set our runner (for the "concordion:run" command) as the default runner:
+  (System/setProperty "concordion.runner.concordion" (.getName ClojureTestRunner)))
