@@ -19,6 +19,8 @@ Add a dependency on this project (copy the [latest dependency specification for 
 
 [![Clojars Project](https://img.shields.io/clojars/v/clj-concordion.svg)](https://clojars.org/clj-concordion)
 
+(Depending on your build tool, you might also need to add an explicit dependency on `org.concordion/concordion`, [see our project.clj](https://github.com/holyjak/clj-concordion/blob/master/project.clj).)
+
 and configure your tests so that the test namespaces are compiled
 (which is necessary since we need to generate fixture classes). With lein:
 
