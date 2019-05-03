@@ -34,7 +34,7 @@
          (sequential? methods)
          (every? var? methods)]}
   (let [class-name (clojure.core/name name)
-        prefix "-"
+        prefix (str (.replaceAll class-name "\\." "-") "-")
         methods*  (->> methods
                        (map var->method-descr)
                        (mapv (juxt :namesym :args :ret)))
@@ -46,9 +46,10 @@
        ~@defns
        (gen-class
          :name ~class-name
-         :methods ~methods*)
-       (test/deftest ~(symbol "concordion")
-         (run-fixture (new ~(symbol class-name)))))))
+         :methods ~methods*
+         :prefix ~prefix)
+       (test/deftest ~(symbol (str prefix "test"))
+         (run-fixture (new ~(symbol class-name)) true)))))
 
 (defmacro deffixture
   "Create a fixture object for a Concordion specification, exposing the functions used in the spec.,
