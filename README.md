@@ -77,6 +77,29 @@ Ran 1 tests containing 0 assertions.
 0 failures, 0 errors.
 ```
 
+#### Options
+
+Notice that `deffixture` takes a third parameter, a map of options - see the spec for valid keys and 
+[FixtureDeclarations](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
+ [ConcordionOptions](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java)
+and Concordion docs for their meaning.
+
+#### Setup & tear-down functions
+
+The `opts` argument do `deffixture` can also contain setup/tear-down functions run at different points of the lifecycle:
+
+```clojure
+(cc/deffixture
+  "math.algebra.AdditionFixture"
+  [myFixtureFn1]
+  {::cc/before-suite   #(println "AdditionFixture: I run before each Suite")
+   ::cc/before-spec    #(println "AdditionFixture: I run before each Spec")
+   ::cc/before-example #(println "AdditionFixture: I run before each example")
+   ::cc/after-example  #(println "AdditionFixture: I run after each example")
+   ::cc/after-spec     #(println "AdditionFixture: I run after each Spec")
+   ::cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
+```
+
 ## Gotchas 
 
 1. You need to run `lein clean` if you change/rename the fixture
@@ -88,8 +111,6 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 
 ### Limitations
 
-* Providing `(before|after)(Suite|Specification|Example)` currently not supported
-* Setting spec-level options such as extra namespaces, fail fast, etc. not supported (yet)
 * `concordion:set` is not supported as it goes against our functional thinking; we can
   add it if there is a good use case and demand
 
