@@ -86,9 +86,17 @@ Ran 1 tests containing 0 assertions.
 
 Alpha. Core features supported but there are certainly many rough corners and lurking bugs.
 
+### Limitations
+
+* Providing `(before|after)(Suite|Specification|Example)` currently not supported
+* Setting spec-level options such as extra namespaces, fail fast, etc. not supported (yet)
+* `concordion:set` is not supported as it goes against our functional thinking; we can
+  add it if there is a good use case and demand
+
 ## Changelog
 
 [See CHANGELOG.md](./CHANGELOG.md).
+
 
 ## TODO
 

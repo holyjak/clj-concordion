@@ -10,4 +10,5 @@
   :repl-options {:init-ns clj-concordion.core}
   :profiles {:test {:aot [clj-concordion.core-test] ;; TODO RegExp for Conc.Spec namespaces
                     :dependencies [[org.concordion/concordion "2.2.0"]
-                                   [io.aviso/pretty "0.1.37"]]}})
+                                   [io.aviso/pretty "0.1.37"]]}
+             :debug {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"]}})
