@@ -252,7 +252,11 @@
    See [concordion instrumenting](https://concordion.org/instrumenting/java/markdown/) and
    [coding docs](https://concordion.org/coding/java/markdown/) for more details."
   [name methods & more]
-  (let [[opts] more]
+  (let [[opts] more
+        opts2check (eval opts)]
+    (when opts2check
+      ;; Fail fast to give err message early to the user
+      (s/assert ::opts opts2check))
     (deffixture*
       name
       (map resolve methods)
