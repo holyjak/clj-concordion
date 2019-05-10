@@ -121,8 +121,8 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 
 ## TODO
 
-* The `org.concordion.internal.FixtureRunner.run(org.concordion.api.Fixture)` we
-  use is deprecated, we should use `(String example, Fixture fixture)` instead
+* Better err when using c:run for Addition.md but forgot to write deffixture AdditionFixture
+* Better error when class not found / forgot compile first (rm aot from test profile, run => see)
 * Support also ^long, not just int (converting to int underneath)
 * In the generated test, add an assertion to check that output from concordion was OK
   so that also clojure.test output shows correctly failed/passed.
