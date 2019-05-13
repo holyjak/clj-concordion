@@ -118,6 +118,8 @@ To be able to run tests repeatedly from the REPL, you need to reset the previous
 
 1. You need to run `lein clean` if you change/rename the fixture
    so that the class will be recompiled
+2. We use `clojure.test` underneath so you must follow its naming syntax for 
+  test namespaces, i.e. for example `<name>-test`
 
 ## Status
 
