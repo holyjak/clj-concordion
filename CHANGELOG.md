@@ -1,5 +1,8 @@
 # Changelog
 
+* 0.0.4 
+  * [feature] Add `(reset-concordion!)` so that tests can be run repeatedly from a REPL
+  * [feature] Better error reporting when feature classes not found
 * 0.0.3 [feature] Support fixture options and `before*/after*` functions
 * 0.0.2
   * [feature] Suppor `concordion:run` command 

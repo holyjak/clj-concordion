@@ -82,7 +82,7 @@ Ran 1 tests containing 0 assertions.
 Notice that `deffixture` takes a third parameter, a map of options - see the spec for valid keys and 
 [FixtureDeclarations](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
  [ConcordionOptions](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java)
-and Concordion docs for their meaning.
+and [Concordion docs](https://concordion.github.io/concordion/latest/spec/annotation/ConcordionOptions.html) for their meaning.
 
 #### Setup & tear-down functions
 
@@ -99,6 +99,20 @@ The `opts` argument do `deffixture` can also contain setup/tear-down functions r
    ::cc/after-spec     #(println "AdditionFixture: I run after each Spec")
    ::cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
 ```
+
+#### REPL development
+
+To be able to run tests repeatedly from the REPL, you need to reset the previously cached results:
+
+```clojure
+(do
+  (cc/reset-concordion!)
+  (run-tests))
+```
+
+### Additional resources
+
+* [Concordion: Markdown Grammar](https://concordion.github.io/concordion/latest/spec/specificationType/markdown/Markdown.html)
 
 ## Gotchas 
 

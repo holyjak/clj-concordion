@@ -72,11 +72,15 @@
         variants (map
                    #(str base-name %)
                    [nil "Test" "Fixture"])]
-    (some
-      #(try
-         (Class/forName %)
-         (catch ClassNotFoundException _ nil))
-      variants)))
+    (or
+      (some
+        #(try
+           (Class/forName %)
+           (catch ClassNotFoundException _ nil))
+        variants)
+      (throw
+        (NoClassDefFoundError.
+          (str "could not find any of possible fixture classes " base-name "[Test|Fixture]. Perhaps you forgot to AOT-compile the test namespace or the output is not on the classpath?"))))))
 
 (defn- rm-fixture-suffix [^String fixture-name]
   (str/replace fixture-name #"(Fixture|Test)$" ""))
@@ -188,14 +192,21 @@
 (defn- new-fixture*
   "Give a user-provided fixture class such as math.Algebra, wrap it in the
    types required by Concordion"
-  [^Class fixture-class opts]
-  (let [fixture-obj (.newInstance fixture-class)
+  [fixture-class-name opts]
+  (let [fixture-class (try
+                        (Class/forName fixture-class-name)
+                        (catch ClassNotFoundException e
+                          (throw (ClassNotFoundException.
+                                   (str "Fixture class " fixture-class-name
+                                        " not found; did you forgot to AOT-compile the test namespace(s) or add the output to the classpath?")
+                                   e))))
+        fixture-obj (.newInstance fixture-class)
         fixture-type (wrap-with-fixture-type
                        (CljFixtureType. fixture-obj opts))]
     (CljFixture. fixture-obj fixture-type opts)))
 
 (s/fdef new-fixture*
-        :args (s/cat :fixture-class class?, :opts (s/nilable ::opts)))
+        :args (s/cat :fixture-class-name string?, :opts (s/nilable ::opts)))
 
 (st/instrument `new-fixture*)
 
@@ -210,7 +221,7 @@
   (let [fixture-class (find-fixture-class resource href)]
     (run-fixture
       (new-fixture
-        fixture-class
+        (.getName fixture-class)
         (._opts (.newInstance fixture-class)))
       ;; Concordion runs before/after suite only for top pages, not those referenced via concordion:run
       false)))
