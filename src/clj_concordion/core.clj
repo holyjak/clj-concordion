@@ -9,15 +9,33 @@
     [org.concordion.internal ClassNameBasedSpecificationLocator
                              FixtureInstance
                              FixtureRunner FixtureType]
-    (org.concordion.api Resource Fixture FixtureDeclarations ImplementationStatus)
-    (org.concordion.api.option ConcordionOptions MarkdownExtensions)))
+    (org.concordion.api Resource Fixture FixtureDeclarations ImplementationStatus ResultSummary)
+    (org.concordion.api.option ConcordionOptions MarkdownExtensions)
+    (org.concordion.internal.cache RunResultsCache)))
+
+(def runResultsCache (RunResultsCache/SINGLETON))
+
+(def fixtures
+  "INTERNAL
+   Note: This is not reliable, as it seems state can be wiped out between
+   test runs. But it is good enough for the purpose of resetting state that
+   has not been wiped out (e.g. when running repeatedly from REPL)."
+  (atom #{}))
+
+(defn reset-concordion!
+  "Reset the results cache so that all tests will run anew."
+  []
+  (run!
+    (fn [^Fixture fixture]
+      (.removeAllFromCache runResultsCache (.getFixtureType fixture)))
+    @fixtures))
 
 (defn- before-suite [fix-inst suite?]
   (when suite?
     (.beforeSuite fix-inst)))
 
 
-(defn run-fixture
+(defn ^ResultSummary run-fixture
   "Test a Concordion specification using the given fixture object
   (which provides the functions used in the specification .md).
   The specification file is found on the classpath based on the name
@@ -229,7 +247,12 @@
                      '[_opts [] java.util.Map])
          :prefix ~prefix)
        (test/deftest ~(symbol (str prefix "test"))
-         (run-fixture (new-fixture ~(symbol class-name) ~opts) true)))))
+         (let [fixture# (new-fixture ~class-name ~opts)
+               ^ResultSummary result# (run-fixture fixture# true)]
+           (do (swap! fixtures conj fixture#))
+           (test/is (zero? (.getExceptionCount result#)))
+           (test/is (zero? (.getFailureCount result#))))))))
+
 
 (defmacro deffixture
   "Create a fixture object for a Concordion specification, exposing the functions needed by it,
