@@ -125,6 +125,7 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 
 ### Limitations
 
+* You cannot and **must not use the [example command](https://concordion.github.io/concordion/latest/spec/specificationType/markdown/Markdown.html)** (i.e. `# \[Your heading](- "example name")`) - if you do, your asserts will be ignored. (Until we fix #2)
 * `concordion:set` is not supported as it goes against our functional thinking; we can
   add it if there is a good use case and demand
 
