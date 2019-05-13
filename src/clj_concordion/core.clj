@@ -261,6 +261,12 @@
          (let [fixture# (new-fixture ~class-name ~opts)
                ^ResultSummary result# (run-fixture fixture# true)]
            (do (swap! fixtures conj fixture#))
+           (when (zero? (+
+                          (.getSuccessCount result#)
+                          (.getExceptionCount result#)
+                          (.getFailureCount result#)))
+             (println (str "Warning: The specification  with the fixture " class-name
+                           " seems to have no asserts.")))
            (test/is (zero? (.getExceptionCount result#)))
            (test/is (zero? (.getFailureCount result#))))))))
 

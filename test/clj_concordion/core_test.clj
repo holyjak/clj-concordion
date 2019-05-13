@@ -39,8 +39,8 @@
    :concordion.option/declare-namespaces      []
    ::cc/before-suite                          #(println "AdditionFixture: I run before each Suite")
    ::cc/before-spec                           #(println "AdditionFixture: I run before each Spec")
-   ::cc/before-example                        #(println "AdditionFixture: I run before each example")
-   ::cc/after-example                         #(println "AdditionFixture: I run after each example")
+   ;::cc/before-example                        #(println "AdditionFixture: I run before each example")
+   ;::cc/after-example                         #(println "AdditionFixture: I run after each example")
    ::cc/after-spec                            #(println "AdditionFixture: I run after each Spec")
    ::cc/after-suite                           #(println "AdditionFixture: I run after each Suite")})
 
