@@ -265,7 +265,7 @@
                           (.getSuccessCount result#)
                           (.getExceptionCount result#)
                           (.getFailureCount result#)))
-             (println (str "Warning: The specification  with the fixture " class-name
+             (println (str "Warning: The specification  with the fixture " ~class-name
                            " seems to have no asserts.")))
            (test/is (zero? (.getExceptionCount result#)))
            (test/is (zero? (.getFailureCount result#))))))))
