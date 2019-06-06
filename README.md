@@ -92,12 +92,12 @@ The `opts` argument do `deffixture` can also contain setup/tear-down functions r
 (cc/deffixture
   "math.algebra.AdditionFixture"
   [myFixtureFn1]
-  {::cc/before-suite   #(println "AdditionFixture: I run before each Suite")
-   ::cc/before-spec    #(println "AdditionFixture: I run before each Spec")
-   ::cc/before-example #(println "AdditionFixture: I run before each example")
-   ::cc/after-example  #(println "AdditionFixture: I run after each example")
-   ::cc/after-spec     #(println "AdditionFixture: I run after each Spec")
-   ::cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
+  {:cc/before-suite   #(println "AdditionFixture: I run before each Suite")
+   :cc/before-spec    #(println "AdditionFixture: I run before each Spec")
+   :cc/before-example #(println "AdditionFixture: I run before each example")
+   :cc/after-example  #(println "AdditionFixture: I run after each example")
+   :cc/after-spec     #(println "AdditionFixture: I run after each Spec")
+   :cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
 ```
 
 #### REPL development
@@ -127,7 +127,6 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 
 ### Limitations
 
-* You cannot and **must not use the [example command](https://concordion.github.io/concordion/latest/spec/specificationType/markdown/Markdown.html)** (i.e. `# \[Your heading](- "example name")`) - if you do, your asserts will be ignored. (Until we fix #2)
 * `concordion:set` is not supported as it goes against our functional thinking; we can
   add it if there is a good use case and demand
 
@@ -135,14 +134,10 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 
 [See CHANGELOG.md](./CHANGELOG.md).
 
-
 ## TODO
 
-* The `org.concordion.internal.FixtureRunner.run(org.concordion.api.Fixture)` we
-  use is deprecated, we should use `(String example, Fixture fixture)` instead
 * Support also ^long, not just int (converting to int underneath)
-* In the generated test, add an assertion to check that output from concordion was OK
-  so that also clojure.test output shows correctly failed/passed.
+* By default (right?) trim strings unless opted out.
 * Re-run tests also when the .md files changes - add the resources/ to the watch path
 
 ## Implementation
@@ -155,8 +150,6 @@ and compatible params.
 Unless we decide to replace Concordion's default `Evaluator` with something more
 Clojure-friendly, we need to use `gen-class` to create a class and object matching
 OGNL's / Concordion's expectations.
-
-The current implementation is based on JUnit3 ConcordionTestCase. 
 
 > There's 2 places where the test runner is called:
   

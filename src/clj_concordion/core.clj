@@ -1,19 +1,45 @@
 (ns clj-concordion.core
   (:require
     [clj-concordion.internal.utils :refer :all]
+    [clj-concordion.specs :as ccs]
     [clojure.test :as test]
     [clojure.spec.alpha :as s]
     [clojure.spec.test.alpha :as st]
-    [clojure.string :as str])
+    [clojure.string :as cs])
   (:import
-    [org.concordion.internal ClassNameBasedSpecificationLocator
-                             FixtureInstance
-                             FixtureRunner FixtureType]
-    (org.concordion.api Resource Fixture FixtureDeclarations ImplementationStatus ResultSummary)
+    (org.concordion Concordion)
+    (org.concordion.api Resource Fixture FixtureDeclarations ResultSummary Runner)
     (org.concordion.api.option ConcordionOptions MarkdownExtensions)
+    (org.concordion.internal FixtureRunner
+                             FixtureType
+                             ClassNameBasedSpecificationLocator FailFastException)
     (org.concordion.internal.cache RunResultsCache)))
 
-(def runResultsCache (RunResultsCache/SINGLETON))
+#_(defn run-fixture
+    "Test a Concordion specification using the given fixture object
+  (which provides the functions used in the specification .md).
+  The specification file is found on the classpath based on the name
+  of the fixture's class.
+  "
+    [^Fixture fixture suite?]
+    (let [fixture-meta (doto fixture
+                         (before-suite suite?)
+                         (.beforeSpecification)
+                         (.setupForRun fixture))
+          result (.run
+                   (FixtureRunner.
+                     fixture-meta
+                     (ClassNameBasedSpecificationLocator.))
+                   fixture-meta)]
+      (do
+        (.afterSpecification fixture-meta)
+        (when suite?
+          (.afterSuite fixture-meta)))
+      result))
+
+(def runResultsCache RunResultsCache/SINGLETON)
+
+;;---------------------------------------------------------------------- resetting
 
 (def fixtures
   "INTERNAL
@@ -30,32 +56,96 @@
       (.removeAllFromCache runResultsCache (.getFixtureType fixture)))
     @fixtures))
 
-(defn- before-suite [fix-inst suite?]
-  (when suite?
-    (.beforeSuite fix-inst)))
+;;---------------------------------------------------------------------- running
 
+(defn- base-example-name
+  "Drop ? and all after that, if present"
+  [example]
+  (cs/replace example #"\?.*$" ""))
 
-(defn ^ResultSummary run-fixture
+(defn- assert-unique-examples [^FixtureDeclarations ftype examples]
+  (let [uniq (->> examples (map base-example-name) set)
+        dupl (->> examples (remove uniq) set)]
+    (when (seq dupl)
+      (throw
+        (ex-info "Specification contains non-unique example names"
+                 {:repeated dupl :all examples
+                  :fixture (.getName (.getFixtureClass ftype))})))))
+
+(defn run-fixture-examples
   "Test a Concordion specification using the given fixture object
-  (which provides the functions used in the specification .md).
+  (which provides the functions used by the specification .md file).
   The specification file is found on the classpath based on the name
   of the fixture's class.
+  See [run-specification]
   "
+  [^Fixture fixture ^FixtureRunner runner ^Concordion concordion]
+  (let [ftype (.getFixtureType fixture)
+        examples (.getExampleNames concordion ftype)]
+    (assert-unique-examples ftype examples)
+    (try
+      (doall
+        (map #(try
+                (.beforeExample fixture %)
+                (doto (.run runner % fixture)
+                  (.assertIsSatisfied ftype))
+                (catch Throwable e
+                  ;; Ignore all non FailFastExc; they are already
+                  ;; recorded in the results summary
+                  (when (instance? FailFastException e)
+                    (throw e)))
+                (finally
+                  (.afterExample fixture %)))
+              examples)))))
+
+(defn- ^ResultSummary cached-spec-result
+  "Return a previously cached result of the spec represented by this `fixture` (or nil).
+
+  The cache has 1 result / example and also a composed result
+  for the whole spec (under the 'example' with nil name).
+  Its goal is to ensure that each fixture is run at most once. This increases the speed of tests
+  when the same fixture is being run by multiple concordion:run commands - as well as by a top-level test itself.
+  "
+  [^Fixture fixture]
+  (some->
+    (.getFromCache
+      runResultsCache
+      (-> fixture (.getFixtureType) (.getFixtureClass))
+      nil)
+    (.getModifiedResultSummary)))
+
+(defn print-result [^ResultSummary res ^FixtureDeclarations ftype]
+  (.print res System/out ftype))
+
+(defn ^ResultSummary run-specification
+  "The entry point into testing a specification, represented by the given `fixture`.
+   See org.concordion.integration.junit4.ConcordionRunner.run
+   "
   [^Fixture fixture suite?]
-  (let [fixture-meta (doto fixture
-                       (before-suite suite?)
-                       (.beforeSpecification)
-                       (.setupForRun fixture))
-        result (.run
-                 (FixtureRunner.
-                   fixture-meta
+  {:post [(instance? ResultSummary %)]}
+  (if-let [cached-res (cached-spec-result fixture)]
+    cached-res
+    (let [ftype (.getFixtureType fixture)
+          runner (FixtureRunner.
+                   fixture
                    (ClassNameBasedSpecificationLocator.))
-                 fixture-meta)]
-    (do
-      (.afterSpecification fixture-meta)
-      (when suite?
-        (.afterSuite fixture-meta)))
-    result))
+          concordion (doto (.getConcordion runner)
+                       (.checkValidStatus ftype))]
+      (try
+        (do
+          (.setupForRun fixture (.getFixtureObject fixture))
+          (when suite? (.beforeSuite fixture))
+          (.startFixtureRun runResultsCache ftype (.getSpecificationDescription concordion))
+          (.beforeSpecification fixture)
+          (run-fixture-examples fixture runner concordion)) ;; run and cache results
+        (doto (cached-spec-result fixture)
+          (print-result ftype))
+        (finally
+          (.afterSpecification fixture)
+          (.finish concordion)
+          (when suite? (.afterSuite fixture)))))))
+
+;;---------------------------------------------------------------------- fixture & c:run helpers
 
 (defn- drop-file-suffix [path]
   (subs path 0 (.lastIndexOf path ".")))
@@ -83,58 +173,9 @@
           (str "could not find any of possible fixture classes " base-name "[Test|Fixture]. Perhaps you forgot to AOT-compile the test namespace or the output is not on the classpath?"))))))
 
 (defn- rm-fixture-suffix [^String fixture-name]
-  (str/replace fixture-name #"(Fixture|Test)$" ""))
+  (cs/replace fixture-name #"(Fixture|Test)$" ""))
 
-(def impl-status {:expected-to-pass ImplementationStatus/EXPECTED_TO_PASS
-                  :expected-to-fail ImplementationStatus/EXPECTED_TO_FAIL
-                  :ignored ImplementationStatus/IGNORED
-                  :unimplemented ImplementationStatus/UNIMPLEMENTED})
-
-;; Fixture options from FixtureDeclarations
-(s/def :concordion/full-ognl boolean?)
-(s/def :concordion/fail-fast boolean?)
-(s/def ::exception-class (s/and class? #(isa? % Throwable)))
-(s/def :concordion/fail-fast-exceptions (s/coll-of ::exception-class))
-(s/def :concordion/impl-status (-> impl-status keys set))
-;; From ConcordionOptions:
-(s/def :concordion.option/markdown-extensions (s/coll-of #(instance? MarkdownExtensions %)))
-(s/def :concordion.option/copy-source-html-to-dir string?)
-(s/def :concordion.option/declare-namespaces (s/coll-of string?))
-(s/def ::before-suite fn?)
-(s/def ::before-spec fn?)
-(s/def ::before-example fn?)
-(s/def ::after-example fn?)
-(s/def ::after-spec fn?)
-(s/def ::after-suite fn?)
-(s/def ::opts
-  (s/and
-    (s/keys :opt [:concordion/full-ognl
-                  :concordion/fail-fast
-                  :concordion/fail-fast-exceptions
-                  :concordion/impl-status
-                  :concordion.option/markdown-extensions
-                  :concordion.option/copy-source-html-to-dir
-                  :concordion.option/declare-namespaces
-                  ::before-suite
-                  ::before-spec
-                  ::before-example
-                  ::after-example
-                  ::after-spec
-                  ::after-suite])
-    (s/every-kv #{:concordion/full-ognl
-                  :concordion/fail-fast
-                  :concordion/fail-fast-exceptions
-                  :concordion/impl-status
-                  :concordion.option/markdown-extensions
-                  :concordion.option/copy-source-html-to-dir
-                  :concordion.option/declare-namespaces
-                  ::before-suite
-                  ::before-spec
-                  ::before-example
-                  ::after-example
-                  ::after-spec
-                  ::after-suite}
-                (constantly true))))
+;;---------------------------------------------------------------------- Fixture Concordion integration classes
 
 (deftype CljFixtureType [fixture-obj opts]
   FixtureDeclarations
@@ -143,7 +184,7 @@
   (declaresFailFast [_] (get opts :concordion/fail-fast false))
   (getDeclaredFailFastExceptions [_] (into-array Class (get opts :concordion/fail-fast-exceptions [])))
   (declaresResources [_] false) ;; FIXME Unusable without annotations; change in API to return a list of @ConcordionResources ? - talk to devs
-  (getDeclaredImplementationStatus [_] (impl-status (get opts :concordion/impl-status :expected-to-pass)))
+  (getDeclaredImplementationStatus [_] (ccs/impl-status (get opts :concordion/impl-status :expected-to-pass)))
   (getDeclaredConcordionOptionsParentFirst [_]
     [(reify ConcordionOptions
        (markdownExtensions [_] (into-array MarkdownExtensions (get opts :concordion.option/markdown-extensions [])))
@@ -151,7 +192,7 @@
        (declareNamespaces [_] (into-array String (get opts :concordion.option/declare-namespaces []))))])
   (getFixturePathWithoutSuffix [this] (-> (.getFixtureClass this)
                                           (.getName)
-                                          (str/replace #"\." "/")
+                                          (cs/replace #"\." "/")
                                           (rm-fixture-suffix)))
   (getDescription [this] (format "[Concordion Specification for '%s']"
                                  (-> (.getFixtureClass this)
@@ -159,8 +200,8 @@
                                      (rm-fixture-suffix)))))
 
 (defn- wrap-with-fixture-type
-  "TMP: Corrently Fixture.getFixtureType returns FixtureType instead of
-   FixtureDeclarations. Until changed we have to enable that.
+  "TMP(hopefully): Currently Fixture.getFixtureType returns FixtureType instead of
+   FixtureDeclarations. Until changed we have to support that.
    Afterwards we can use CljFixtureType directly."
   [my-fix-type]
   (proxy [FixtureType] [(.getFixtureClass my-fix-type)]
@@ -176,17 +217,16 @@
 
 (deftype CljFixture [fixture-obj ^FixtureType fixture-type opts]
   Fixture
-  ;; TODO Enable users to specify before/after* functions
   (getFixtureObject [_] fixture-obj)
   (getFixtureType [_] fixture-type)
   (setupForRun [_ _] nil)
-  (beforeSuite [_] (when-let [f (::before-suite opts)] (f)))
-  (afterSuite [_] (when-let [f (::after-suite opts)] (f)))
-  (beforeSpecification [_] (when-let [f (::before-spec opts)] (f)))
-  (afterSpecification [_] (when-let [f (::after-spec opts)] (f)))
+  (beforeSuite [_] (when-let [f (:cc/before-suite opts)] (f)))
+  (afterSuite [_] (when-let [f (:cc/after-suite opts)] (f)))
+  (beforeSpecification [_] (when-let [f (:cc/before-spec opts)] (f)))
+  (afterSpecification [_] (when-let [f (:cc/after-spec opts)] (f)))
   (beforeProcessExample [_ _] nil)
-  (beforeExample [_ _] (when-let [f (::before-example opts)] (f)))
-  (afterExample [_ _] (when-let [f (::after-example opts)] (f)))
+  (beforeExample [_ ex] (when-let [f (:cc/before-example opts)] (f ex)))
+  (afterExample [_ ex] (when-let [f (:cc/after-example opts)] (f ex)))
   (afterProcessExample [_ _] nil))
 
 (defn- new-fixture*
@@ -206,7 +246,7 @@
     (CljFixture. fixture-obj fixture-type opts)))
 
 (s/fdef new-fixture*
-        :args (s/cat :fixture-class-name string?, :opts (s/nilable ::opts)))
+        :args (s/cat :fixture-class-name string?, :opts (s/nilable :cc/opts)))
 
 (st/instrument `new-fixture*)
 
@@ -214,23 +254,35 @@
 ;;   same class and thus caching of run results in Concordion will work.
 (def new-fixture (memoize new-fixture*))
 
+;;---------------------------------------------------------------------- concordion:run command
+
 (defn- concordion-run
   "Support for concordion:run, invoked e.g. with
    [(org.concordion.api.Resource. \"/math/Algebra.html\") \"./algebra/Addition.md\"]"
   [resource href]
   (let [fixture-class (find-fixture-class resource href)]
-    (run-fixture
+    (run-specification
       (new-fixture
         (.getName fixture-class)
         (._opts (.newInstance fixture-class)))
       ;; Concordion runs before/after suite only for top pages, not those referenced via concordion:run
       false)))
 
+(defn- assert-type [obj ^Class type]
+  (assert
+    (instance? type obj)
+    (str "Not instance of " type "; value = " obj))
+  obj)
+
+;; Runner implementation to be registered with Concordion, responsible for handling concordion:run commands
 (defrecord ClojureTestRunner []
-  org.concordion.api.Runner
+  Runner
   ;; ResultSummary execute(Resource resource, String href) throws Exception;
   (execute [_ resource href]
-    (concordion-run resource href)))
+    (doto (concordion-run resource href)
+      (assert-type ResultSummary))))
+
+;;---------------------------------------------------------------------- the deffixture macro & friends
 
 (defn- deffixture*
   [name methods opts]
@@ -259,7 +311,7 @@
          :prefix ~prefix)
        (test/deftest ~(symbol (str prefix "test"))
          (let [fixture# (new-fixture ~class-name ~opts)
-               ^ResultSummary result# (run-fixture fixture# true)]
+               result# (run-specification fixture# true)]
            (do (swap! fixtures conj fixture#))
            (when (zero? (+
                           (.getSuccessCount result#)
@@ -296,19 +348,20 @@
         opts2check (eval opts)]
     (when opts2check
       ;; Fail fast to give err message early to the user
-      (s/assert ::opts opts2check))
+      (s/assert :cc/opts opts2check))
     (deffixture*
       name
       (map resolve methods)
       opts)))
 
-(s/def ::classname (s/or :str string? :sym symbol?))
-(s/def ::methods (s/coll-of symbol?))
 (s/fdef deffixture
-        :args (s/cat :name ::classname
-                     :methods ::methods
+        :args (s/cat :name :cc/classname
+                     :methods :cc/methods
                      :opts (s/? map?)))
 
 (do
   ;; Set our runner (for the "concordion:run" command) as the default runner:
   (System/setProperty "concordion.runner.concordion" (.getName ClojureTestRunner)))
+
+
+
