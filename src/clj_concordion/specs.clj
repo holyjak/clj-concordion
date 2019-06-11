@@ -9,7 +9,6 @@
                   :unimplemented    ImplementationStatus/UNIMPLEMENTED})
 
 ;; Fixture options from FixtureDeclarations
-(s/def :concordion/full-ognl boolean?)
 (s/def :concordion/fail-fast boolean?)
 (s/def ::exception-class (s/and class? #(isa? % Throwable)))
 (s/def :concordion/fail-fast-exceptions (s/coll-of ::exception-class))
@@ -26,8 +25,7 @@
 (s/def :cc/after-suite fn?)
 (s/def :cc/opts
   (s/and
-    (s/keys :opt [:concordion/full-ognl
-                  :concordion/fail-fast
+    (s/keys :opt [:concordion/fail-fast
                   :concordion/fail-fast-exceptions
                   :concordion/impl-status
                   :concordion.option/markdown-extensions
@@ -39,20 +37,33 @@
                   :cc/after-example
                   :cc/after-spec
                   :cc/after-suite])
-    (s/every-kv #{:concordion/full-ognl
-                  :concordion/fail-fast
-                  :concordion/fail-fast-exceptions
-                  :concordion/impl-status
-                  :concordion.option/markdown-extensions
-                  :concordion.option/copy-source-html-to-dir
-                  :concordion.option/declare-namespaces
-                  :cc/before-suite
-                  :cc/before-spec
-                  :cc/before-example
-                  :cc/after-example
-                  :cc/after-spec
-                  :cc/after-suite}
+    (s/map-of #{:concordion/fail-fast
+                :concordion/fail-fast-exceptions
+                :concordion/impl-status
+                :concordion.option/markdown-extensions
+                :concordion.option/copy-source-html-to-dir
+                :concordion.option/declare-namespaces
+                :cc/before-suite
+                :cc/before-spec
+                :cc/before-example
+                :cc/after-example
+                :cc/after-spec
+                :cc/after-suite}
                 (constantly true))))
 
 (s/def :cc/classname (s/or :str string? :sym symbol?))
-(s/def :cc/methods (s/coll-of symbol?))
+
+(s/def :expr/arg (s/or :variable symbol? :string string? :number number? :boolean boolean?))
+(s/def ::call-expr (s/cat
+                     :function symbol?
+                     :arguments (s/coll-of :expr/arg :kind sequential?)))
+;; FIXME Shouldn't Concordion distinguish `#result`, `#result = myfn()`, `myfn()` and call `setVariable` for the first two instead of eval.?
+;; Ex.: `#result = add(1, 2)` => `[result = add 1 2]`
+(s/def ::assign-expr (s/cat
+                       :variable symbol?
+                       :equals #{'=}
+                       :call-expr ::call-expr))
+(s/def ::expr (s/or
+                :single-var (s/cat :variable symbol?)
+                :call-expr ::call-expr
+                :assign-expr ::assign-expr))

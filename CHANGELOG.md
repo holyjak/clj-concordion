@@ -1,5 +1,7 @@
 # Changelog
 
+* 0.0.10
+  * [breaking] Simplifed, got rid of `gen-class`. Breaking: `deffixture` no longer takes a list of functions. We have now our own evaluator but it should be compatible with Concordion expressions. Arguments can be variables or constants.
 * 0.0.5
   * [feature] Support the example command <=> use JUnit4-style integration
   * [breaking] change: qualified keys that used `:clj-concordion.core/` now use `:cc/`. 

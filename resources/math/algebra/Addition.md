@@ -18,6 +18,10 @@ Adding [1](- "#n1") and [3](- "#n2") yields [4](- "?=add(#n1, #n2)").
 
 Adding the positive postive number [3](- "#n1") and the negative number [-4](- "#n2") yields [-1](- "?=add(#n1, #n2)").
 
+### [Example: output variable](-)
+
+[Given 1+2](- "#result = add(&quot;1&quot;, &quot;2&quot;)") we expect the result to be [3](- "?=#result").
+
 ### [Example: exception handling](-)
 
 What happens if the code throws an unexpected exception? This:

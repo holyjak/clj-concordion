@@ -23,16 +23,6 @@ Add a dependency on this project (copy the [latest dependency specification for 
 
 (Depending on your build tool, you might also need to add an explicit dependency on `org.concordion/concordion`, [see our project.clj](https://github.com/holyjak/clj-concordion/blob/master/project.clj).)
 
-and configure your tests so that the test namespaces are compiled
-(which is necessary since we need to generate fixture classes). With lein:
-
-```clojure
-;; project.clj
-(defproject ...
-  :profiles {:test {:aot [mypapp.core-test] }} ;; Or a RegExp for all fixture test namespaces
-)
-```
-
 ### Coding
 
 Given the Concordion specification `<class path>/math/Addition.md` containing:
@@ -41,34 +31,28 @@ Given the Concordion specification `<class path>/math/Addition.md` containing:
 Adding [1](- "#n1") and [3](- "#n2") yields [4](- "?=add(#n1, #n2)").
 ```
 
-you need to implement the function in a test namespace and create the fixture for it:
+you need to implement the function in a test namespace of a matching name (plus `-test`) and define the fixture for it:
 
 ```clojure
-(ns mypapp.core-test
+(ns math-test
   (:require
-      [clj-concordion.core :as conc]))
+      [clj-concordion.core :as cc]))
 
-;; The arguments and return values must by type-hinted using one of the types
-;; supported by Concordion: Integer, boolean, or (default) String. If no type 
-;; hint is provided at some place, String is assumed.
-(defn ^Integer add [^Integer n1, ^Integer n2]
-  (int (+ n1 n2)))
+; The arguments are always Strings
+(defn add [n1 n2]
+  (int (+ (Integer/parseInt n1) (Integer/parseInt n2))))
 
-;; Create the fixture class and clojure.test test, passing it the function(s)
-;; Notice that the name of the class corresponds to the path to the specification
-;; .md (plus the optional "Fixture")
-;; You can have one or more fixtures in one namespace and the name of the 
-;; namespace plays no role
-(conc/deffixture "math.AdditionFixture" [add])
+;; Create the fixture class and clojure.test test.
+;; Notice that the name of the ns and fixture corresponds to the path to the specification
+;; .md (excluding the "-test" suffix of the ns)
+(cc/deffixture Addition)
 ```
 
 And run it:
 
 ```bash
 $ lein with-profile auto test
-Compiling mypapp.core-test
-
-lein test mypapp.core-test
+lein test math-test
 
 file:///var/folders/kg/r_8ytg7x521cvlmz_47t2rgc0000gn/T/concordion/math/Addition.html
 Successes: 1, Failures: 0
@@ -77,21 +61,24 @@ Ran 1 tests containing 0 assertions.
 0 failures, 0 errors.
 ```
 
+#### Deviation from Concordion
+
+* Expressions can contain not only variables but also constants. (Any valid EDN should be OK.)
+* The option `` is not supported because we have our own evaluator. 
+
 #### Options
 
-Notice that `deffixture` takes a third parameter, a map of options - see the spec for valid keys and 
+Notice that `deffixture` takes a second, optional parameter, a map of options - see the spec for valid keys and 
 [FixtureDeclarations](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
  [ConcordionOptions](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java)
 and [Concordion docs](https://concordion.github.io/concordion/latest/spec/annotation/ConcordionOptions.html) for their meaning.
 
 #### Setup & tear-down functions
 
-The `opts` argument do `deffixture` can also contain setup/tear-down functions run at different points of the lifecycle:
+The `opts` argument to `deffixture` can also contain setup/tear-down functions run at different points of the lifecycle:
 
 ```clojure
-(cc/deffixture
-  "math.algebra.AdditionFixture"
-  [myFixtureFn1]
+(cc/deffixture Addition
   {:cc/before-suite   #(println "AdditionFixture: I run before each Suite")
    :cc/before-spec    #(println "AdditionFixture: I run before each Spec")
    :cc/before-example #(println "AdditionFixture: I run before each example")
@@ -127,29 +114,21 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 
 ### Limitations
 
-* `concordion:set` is not supported as it goes against our functional thinking; we can
-  add it if there is a good use case and demand
-
 ## Changelog
 
 [See CHANGELOG.md](./CHANGELOG.md).
 
 ## TODO
 
-* Support also ^long, not just int (converting to int underneath)
-* By default (right?) trim strings unless opted out.
 * Re-run tests also when the .md files changes - add the resources/ to the watch path
 
 ## Implementation
 
-Concordion uses [OGNL](https://commons.apache.org/proper/commons-ognl/) to map function calls 
-and property access in the specification to the fixture class, using presumably
-reflection, requiring that the fixture class has a method with a corresponding name
-and compatible params. 
+NOTE: Concordion normally uses [OGNL](https://commons.apache.org/proper/commons-ognl/) to map function calls 
+and property access in the specification to the fixture class. We replace it with
+our own evaulator so that we don't need to generate classes from Clojure.
 
-Unless we decide to replace Concordion's default `Evaluator` with something more
-Clojure-friendly, we need to use `gen-class` to create a class and object matching
-OGNL's / Concordion's expectations.
+How is a specification test invoked:
 
 > There's 2 places where the test runner is called:
   
@@ -158,6 +137,12 @@ OGNL's / Concordion's expectations.
 > Indirectly, from a Concordion Suite, when the concordion:run command is encountered in a specification, spawning a new test within a test. If you want to support the concordion:run command, this is where the Runner / DefaultConcordionRunner comes in. By default ConcordionBuilder plugs in a SystemPropertiesRunnerFactory which lets you override the Runner with a system property. If this doesn't suit, we could open up withRunnerFactory as an extension method - rather than overriding RunStrategy which is designed to cater for different strategies for invoking the Runner.
 
 ## Development
+
+### Testing
+
+```
+lein with-profile test auto test
+```
 
 ### Deployment
 

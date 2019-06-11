@@ -1,6 +1,7 @@
 (ns clj-concordion.core
   (:require
     [clj-concordion.internal.utils :refer :all]
+    [clj-concordion.internal.interop :refer :all]
     [clj-concordion.specs :as ccs]
     [clojure.test :as test]
     [clojure.spec.alpha :as s]
@@ -8,11 +9,10 @@
     [clojure.string :as cs])
   (:import
     (org.concordion Concordion)
-    (org.concordion.api Resource Fixture FixtureDeclarations ResultSummary Runner)
-    (org.concordion.api.option ConcordionOptions MarkdownExtensions)
+    (org.concordion.api Fixture FixtureDeclarations ResultSummary Runner)
     (org.concordion.internal FixtureRunner
                              FixtureType
-                             ClassNameBasedSpecificationLocator FailFastException)
+                             FailFastException RunOutput)
     (org.concordion.internal.cache RunResultsCache)))
 
 #_(defn run-fixture
@@ -108,9 +108,10 @@
   "
   [^Fixture fixture]
   (some->
+    ^RunOutput
     (.getFromCache
       runResultsCache
-      (-> fixture (.getFixtureType) (.getFixtureClass))
+      ^Class (-> fixture (.getFixtureType) (.getFixtureClass))
       nil)
     (.getModifiedResultSummary)))
 
@@ -128,7 +129,7 @@
     (let [ftype (.getFixtureType fixture)
           runner (FixtureRunner.
                    fixture
-                   (ClassNameBasedSpecificationLocator.))
+                   specification->fixture-locator)
           concordion (doto (.getConcordion runner)
                        (.checkValidStatus ftype))]
       (try
@@ -145,126 +146,17 @@
           (.finish concordion)
           (when suite? (.afterSuite fixture)))))))
 
-;;---------------------------------------------------------------------- fixture & c:run helpers
-
-(defn- drop-file-suffix [path]
-  (subs path 0 (.lastIndexOf path ".")))
-
-(defn- find-fixture-class [^Resource resource ^String href]
-  ;; See DefaultConcordionRunner.findTestClass
-  (let [base-name (-> resource
-                      (.getParent)
-                      (.getRelativeResource href)
-                      (.getPath)
-                      (.replaceFirst "/" "")
-                      (.replace "/" ".")
-                      (drop-file-suffix))
-        variants (map
-                   #(str base-name %)
-                   [nil "Test" "Fixture"])]
-    (or
-      (some
-        #(try
-           (Class/forName %)
-           (catch ClassNotFoundException _ nil))
-        variants)
-      (throw
-        (NoClassDefFoundError.
-          (str "could not find any of possible fixture classes " base-name "[Test|Fixture]. Perhaps you forgot to AOT-compile the test namespace or the output is not on the classpath?"))))))
-
-(defn- rm-fixture-suffix [^String fixture-name]
-  (cs/replace fixture-name #"(Fixture|Test)$" ""))
-
-;;---------------------------------------------------------------------- Fixture Concordion integration classes
-
-(deftype CljFixtureType [fixture-obj opts]
-  FixtureDeclarations
-  (getFixtureClass [_] (.getClass fixture-obj))
-  (declaresFullOGNL [_] (get opts :concordion/full-ognl false))
-  (declaresFailFast [_] (get opts :concordion/fail-fast false))
-  (getDeclaredFailFastExceptions [_] (into-array Class (get opts :concordion/fail-fast-exceptions [])))
-  (declaresResources [_] false) ;; FIXME Unusable without annotations; change in API to return a list of @ConcordionResources ? - talk to devs
-  (getDeclaredImplementationStatus [_] (ccs/impl-status (get opts :concordion/impl-status :expected-to-pass)))
-  (getDeclaredConcordionOptionsParentFirst [_]
-    [(reify ConcordionOptions
-       (markdownExtensions [_] (into-array MarkdownExtensions (get opts :concordion.option/markdown-extensions [])))
-       (copySourceHtmlToDir [_] (get opts :concordion.option/copy-source-html-to-dir ""))
-       (declareNamespaces [_] (into-array String (get opts :concordion.option/declare-namespaces []))))])
-  (getFixturePathWithoutSuffix [this] (-> (.getFixtureClass this)
-                                          (.getName)
-                                          (cs/replace #"\." "/")
-                                          (rm-fixture-suffix)))
-  (getDescription [this] (format "[Concordion Specification for '%s']"
-                                 (-> (.getFixtureClass this)
-                                     (.getSimpleName)
-                                     (rm-fixture-suffix)))))
-
-(defn- wrap-with-fixture-type
-  "TMP(hopefully): Currently Fixture.getFixtureType returns FixtureType instead of
-   FixtureDeclarations. Until changed we have to support that.
-   Afterwards we can use CljFixtureType directly."
-  [my-fix-type]
-  (proxy [FixtureType] [(.getFixtureClass my-fix-type)]
-    (getFixtureClass [] (.getFixtureClass my-fix-type))
-    (declaresFullOGNL [] (.declaresFullOGNL my-fix-type))
-    (declaresFailFast [] (.declaresFailFast my-fix-type))
-    (getDeclaredFailFastExceptions [] (.getDeclaredFailFastExceptions my-fix-type))
-    (declaresResources [] (.declaresResources my-fix-type))
-    (getDeclaredImplementationStatus [] (.getDeclaredImplementationStatus my-fix-type))
-    (getDeclaredConcordionOptionsParentFirst [] (.getDeclaredConcordionOptionsParentFirst my-fix-type))
-    (getFixturePathWithoutSuffix [] (.getFixturePathWithoutSuffix my-fix-type))
-    (getDescription [] (.getDescription my-fix-type))))
-
-(deftype CljFixture [fixture-obj ^FixtureType fixture-type opts]
-  Fixture
-  (getFixtureObject [_] fixture-obj)
-  (getFixtureType [_] fixture-type)
-  (setupForRun [_ _] nil)
-  (beforeSuite [_] (when-let [f (:cc/before-suite opts)] (f)))
-  (afterSuite [_] (when-let [f (:cc/after-suite opts)] (f)))
-  (beforeSpecification [_] (when-let [f (:cc/before-spec opts)] (f)))
-  (afterSpecification [_] (when-let [f (:cc/after-spec opts)] (f)))
-  (beforeProcessExample [_ _] nil)
-  (beforeExample [_ ex] (when-let [f (:cc/before-example opts)] (f ex)))
-  (afterExample [_ ex] (when-let [f (:cc/after-example opts)] (f ex)))
-  (afterProcessExample [_ _] nil))
-
-(defn- new-fixture*
-  "Give a user-provided fixture class such as math.Algebra, wrap it in the
-   types required by Concordion"
-  [fixture-class-name opts]
-  (let [fixture-class (try
-                        (Class/forName fixture-class-name)
-                        (catch ClassNotFoundException e
-                          (throw (ClassNotFoundException.
-                                   (str "Fixture class " fixture-class-name
-                                        " not found; did you forgot to AOT-compile the test namespace(s) or add the output to the classpath?")
-                                   e))))
-        fixture-obj (.newInstance fixture-class)
-        fixture-type (wrap-with-fixture-type
-                       (CljFixtureType. fixture-obj opts))]
-    (CljFixture. fixture-obj fixture-type opts)))
-
-(s/fdef new-fixture*
-        :args (s/cat :fixture-class-name string?, :opts (s/nilable :cc/opts)))
-
-(st/instrument `new-fixture*)
-
-;; Memoized new-fixture* so that we always get the same instance for the
-;;   same class and thus caching of run results in Concordion will work.
-(def new-fixture (memoize new-fixture*))
-
 ;;---------------------------------------------------------------------- concordion:run command
 
 (defn- concordion-run
   "Support for concordion:run, invoked e.g. with
    [(org.concordion.api.Resource. \"/math/Algebra.html\") \"./algebra/Addition.md\"]"
   [resource href]
-  (let [fixture-class (find-fixture-class resource href)]
+  (let [fixture-var (specification->fixture resource href)]
     (run-specification
       (new-fixture
-        (.getName fixture-class)
-        (._opts (.newInstance fixture-class)))
+        fixture-var
+        @fixture-var)
       ;; Concordion runs before/after suite only for top pages, not those referenced via concordion:run
       false)))
 
@@ -284,40 +176,27 @@
 
 ;;---------------------------------------------------------------------- the deffixture macro & friends
 
-(defn- deffixture*
-  [name methods opts]
-  {:pre [(or (symbol? name) (string? name))
-         (sequential? methods)
-         (every? var? methods)]}
+(defn assert-test-ns [ns]
+  (assert
+    (cs/ends-with? (name (ns-name ns)) "-test")
+    "The namespace using `deffixture` must end in -test so that clojure.test will find and run the generated test."))
 
-  (let [class-name (clojure.core/name name)
-        prefix (str (.replaceAll class-name "\\." "-") "-")
-        methods* (->> methods
-                      (map var->method-descr)
-                      (mapv (juxt :namesym :args :ret)))
-        ;; implementation functions for the methods:
-        defns (map
-                (partial ->defn prefix)
-                methods)]
+(defn- deffixture*
+  [name opts]
+  {:pre [(or (symbol? name) #_(string? name))]}
+  (assert-test-ns *ns*)
+  (let [var-sym name]
     `(do
-       ~@defns
-       (defn ~(symbol (str prefix "_opts")) [~'_]
-         ~opts)
-       (gen-class
-         :name ~class-name
-         :methods ~(conj
-                     methods*
-                     '[_opts [] java.util.Map])
-         :prefix ~prefix)
-       (test/deftest ~(symbol (str prefix "test"))
-         (let [fixture# (new-fixture ~class-name ~opts)
-               result# (run-specification fixture# true)]
+       (def ~var-sym ~opts)
+       (test/deftest ~(symbol (str var-sym "-test"))
+         (let [fixture# (new-fixture (var ~var-sym) ~opts)
+               result#  (run-specification fixture# true)]
            (do (swap! fixtures conj fixture#))
            (when (zero? (+
                           (.getSuccessCount result#)
                           (.getExceptionCount result#)
                           (.getFailureCount result#)))
-             (println (str "Warning: The specification  with the fixture " ~class-name
+             (println (str "Warning: The specification  with the fixture " (var ~var-sym)
                            " seems to have no asserts.")))
            (test/is (zero? (.getExceptionCount result#)))
            (test/is (zero? (.getFailureCount result#))))))))
@@ -343,7 +222,7 @@
 
    See [concordion instrumenting](https://concordion.org/instrumenting/java/markdown/) and
    [coding docs](https://concordion.org/coding/java/markdown/) for more details."
-  [name methods & more]
+  [name & more]
   (let [[opts] more
         opts2check (eval opts)]
     (when opts2check
@@ -351,12 +230,10 @@
       (s/assert :cc/opts opts2check))
     (deffixture*
       name
-      (map resolve methods)
       opts)))
 
 (s/fdef deffixture
         :args (s/cat :name :cc/classname
-                     :methods :cc/methods
                      :opts (s/? map?)))
 
 (do
