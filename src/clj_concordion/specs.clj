@@ -49,7 +49,7 @@
                 :cc/after-example
                 :cc/after-spec
                 :cc/after-suite}
-                (constantly true))))
+              (constantly true))))
 
 (s/def :cc/classname (s/or :str string? :sym symbol?))
 

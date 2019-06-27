@@ -36,6 +36,7 @@ you need to implement the function in a test namespace of a matching name (plus 
 ```clojure
 (ns math-test
   (:require
+      [clojure.test :refer :all]
       [clj-concordion.core :as cc]))
 
 ; The arguments are always Strings
@@ -46,6 +47,9 @@ you need to implement the function in a test namespace of a matching name (plus 
 ;; Notice that the name of the ns and fixture corresponds to the path to the specification
 ;; .md (excluding the "-test" suffix of the ns)
 (cc/deffixture Addition)
+
+;; Ensure Concordion is reset between each run (when running repeatedly via REPL)
+(use-fixtures :once cc/cljtest-reset-concordion)
 ```
 
 And run it:

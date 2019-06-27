@@ -56,6 +56,13 @@
       (.removeAllFromCache runResultsCache (.getFixtureType fixture)))
     @fixtures))
 
+(defn cljtest-reset-concordion
+  "clojure.test fixture to reset concordion between runs, see `reset-concordion!`
+  Usage: `(clojure.test/use-fixtures :once cljtest-reset-concordion)`"
+  [f]
+  (reset-concordion!)
+  (f))
+
 ;;---------------------------------------------------------------------- running
 
 (defn- base-example-name
