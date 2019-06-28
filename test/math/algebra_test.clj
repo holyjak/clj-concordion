@@ -13,6 +13,9 @@
   [n1 n2]
   (int (+ (parse-int n1) (parse-int n2))))
 
+(defn addStr [s1 s2]
+  (str s1 s2))
+
 (cc/deffixture Addition
   {:concordion/fail-fast                      true
    :concordion/fail-fast-exceptions           [IndexOutOfBoundsException]

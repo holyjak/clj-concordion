@@ -102,10 +102,13 @@
 (defn expr->edn
   "Sanitize a Concordion function call expression so that it is a valid EDN string."
   [expr]
-  ;; wrap in a vector since we have pair `symbol arg-list` so EDN would only read the 1st.
+  ;; 1. Wrap in a vector since we have pair `symbol arg-list` so EDN would only read the 1st.
   (-> (str "[" expr "]")
-      ;; remove '#' so the reader doesn't blow up; symbols will be good enough
-      (cs/replace #"#" "")))
+      ;; 2. Remove '#' so the reader doesn't blow up; symbols will be good enough
+      (cs/replace #"#" "")
+      ;; 3. Replace nested '..' with ".." so that we can embed literal strings in Markdown
+      ;; (Concordion always outputs ".." around the command as of 2.2.0, see org.pegdown.ToHtmlSerializer.printAttribute
+      (cs/replace #"\'" "\"")))
 
 (defn sym->qualified [ns unqualified-sym]
   (symbol ns (name unqualified-sym)))

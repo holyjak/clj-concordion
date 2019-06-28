@@ -24,6 +24,10 @@ Adding the positive postive number [3](- "#n1") and the negative number [-4](- "
 
 [Given 1+2](- "#result = add(&quot;1&quot;, &quot;2&quot;)") we expect the result to be [3](- "?=#result").
 
+### [Example: Magic - we can add strings!](-)
+
+[addedTogether](- "?=addStr('added', 'Together')")
+
 ### [Example: exception handling](- "exception_throwing c:status=ExpectedToFail")
 
 What happens if the code throws an unexpected exception? This:
