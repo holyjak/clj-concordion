@@ -215,7 +215,7 @@
 
 (deftype CljFixtureType [fixture-var opts]
   FixtureDeclarations
-  (getFixtureClass [_] Object)
+  (getFixtureClass [_] (:cc/class (meta fixture-var)))
   (declaresFullOGNL [_] false) ;; We don't use the default OGNL evaluator so it has no meaning
   (declaresFailFast [_] (get opts :concordion/fail-fast false))
   (getDeclaredFailFastExceptions [_] (into-array Class (get opts :concordion/fail-fast-exceptions [])))
@@ -260,6 +260,7 @@
   (beforeExample [_ ex] (when-let [f (:cc/before-example opts)] (f ex)))
   (afterExample [_ ex] (when-let [f (:cc/after-example opts)] (f ex)))
   (afterProcessExample [_ _] nil)
+  Object
   (toString [_] (str "Wrapper for " fixture-obj)))
 
 (defn- new-fixture*

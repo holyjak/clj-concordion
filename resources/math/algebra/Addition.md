@@ -10,11 +10,13 @@ We are able to add numbers correctly.
 
 Given the base [0](- "#base"), the following examples should pass. <!-- made up example, we don't really use #base -->
 
-### [Example: addition (positive)](-) <!-- a named example with an implicit name -->
+### [Example: addition (positive)](-)
+<!-- a named example with an implicit name -->
 
 Adding [1](- "#n1") and [3](- "#n2") yields [4](- "?=add(#n1, #n2)").
 
-### [Example: addition (negative)](- "addition-") <!-- a named example with an explicit name -->
+### [Example: addition (negative)](- "addition-negative") 
+<!-- a named example with an explicit name -->
 
 Adding the positive postive number [3](- "#n1") and the negative number [-4](- "#n2") yields [-1](- "?=add(#n1, #n2)").
 
@@ -22,7 +24,7 @@ Adding the positive postive number [3](- "#n1") and the negative number [-4](- "
 
 [Given 1+2](- "#result = add(&quot;1&quot;, &quot;2&quot;)") we expect the result to be [3](- "?=#result").
 
-### [Example: exception handling](-)
+### [Example: exception handling](- "exception_throwing c:status=ExpectedToFail")
 
 What happens if the code throws an unexpected exception? This:
 

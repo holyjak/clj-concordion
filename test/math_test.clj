@@ -25,11 +25,4 @@
                 :cc/after-spec     #(println "AlgebraFixture: I run after each Spec")
                 :cc/after-suite    #(println "AlgebraFixture: I run after each Suite")})
 
-(defn reset-concordion
-  "Reset Concordion's caches so that we can run repeatedly from REPL.
-   Only needs to be called once per `(run-tests)` call."
-  [f]
-  (cc/reset-concordion!)
-  (f))
-
-(use-fixtures :once reset-concordion)
+(use-fixtures :once cc/cljtest-reset-concordion)
