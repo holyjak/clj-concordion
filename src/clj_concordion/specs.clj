@@ -53,7 +53,12 @@
 
 (s/def :cc/classname (s/or :str string? :sym symbol?))
 
-(s/def :expr/arg (s/or :variable symbol? :string string? :number number? :boolean boolean?))
+(s/def :expr/arg (s/or
+                   :variable symbol?
+                   :string string?
+                   :number number?
+                   :boolean boolean?
+                   :keyword keyword?))
 (s/def ::call-expr (s/cat
                      :function symbol?
                      :arguments (s/coll-of :expr/arg :kind sequential?)))
