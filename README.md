@@ -67,8 +67,22 @@ Ran 1 tests containing 0 assertions.
 
 #### Deviation from Concordion
 
-* Expressions can contain not only variables but also constants. (Any valid EDN should be OK.)
-* The option `` is not supported because we have our own evaluator. 
+* See "Valid expressions in specification files" below
+* The option `declaresFullOGNL` is not supported because we have our own evaluator.
+
+##### Valid expressions in specification files
+
+We use our own expression evaluator instead of Concordion's OGNL one, which has
+some consequences, both positive and negative.
+
+The expressions are a subset & superset of EDN and thus:
+
+* Constants are supported. Ex.: `[ ](- "myFn(#var1, 'literal string', 123)")`  
+* Keywords are allowed: `"doSomething(:action 'fire!')"`
+* Commas are optional
+* Spaces between elements are _required_. Ex.: `#var = myFn()` will work but `#var=myFn()` will fail.
+* Special handling of `'` and `#`: all `'` are replaced with `"` and all `#` are removed.
+  This can conflict with test values that contain them - report an issue if it happens.  
 
 #### Options
 
