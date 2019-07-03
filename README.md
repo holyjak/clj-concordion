@@ -169,6 +169,9 @@ lein with-profile test auto test
 gpg --quiet --batch --decrypt ~/.lein/credentials.clj.gpg
 # Deploy
 lein deploy clojars
+
+# Likely: tag, change version to <next>-SNAPSHOT
+git tag <version>; git push; git push --tags
 ```
 
 ## License
