@@ -2,7 +2,8 @@
   (:require
     [clj-concordion.internal.utils :refer :all]
     [clj-concordion.internal.interop :refer :all]
-    [clojure.string :as cs])
+    [clojure.string :as cs]
+    [clojure.tools.logging :as log])
   (:import
     (org.concordion Concordion)
     (org.concordion.api Fixture FixtureDeclarations ResultSummary Runner)
@@ -42,19 +43,22 @@
   (let [ftype (.getFixtureType fixture)
         examples (.getExampleNames concordion ftype)]
     (assert-unique-examples fixture examples)
+    (log/debug "run-fixture-examples: examples found in " (.getFixtureObject fixture) ": " examples)
     (doall
       (map
-        #(try
+        #(do
            (.beforeExample fixture %)
-           (doto (.run runner % fixture)
-             (.assertIsSatisfied ftype))
-           (catch Throwable e
-             ;; Ignore all non FailFastExc; they are already
-             ;; recorded in the results summary
-             (when (instance? FailFastException e)
-               (throw e)))
-           (finally
-             (.afterExample fixture %)))
+           (try
+             (doto (.run runner % fixture)
+               (.assertIsSatisfied ftype))
+             (catch Throwable e
+               ;; Ignore all non FailFastExc; they are already
+               ;; recorded in the results summary
+               (if (instance? FailFastException e)
+                 (throw e)
+                 (log/info e "Example '" % "' failed with an exception. Continuing because it is not configured in `:concordion/fail-fast[-exceptions]`; the test will be marked as failed.")))
+             (finally
+               (.afterExample fixture %))))
         examples))))
 
 (defn ^ResultSummary cached-spec-result
@@ -112,7 +116,8 @@
 
 (defn concordion-run
   "Support for concordion:run, invoked e.g. with
-   [(org.concordion.api.Resource. \"/math/Algebra.html\") \"./algebra/Addition.md\"]"
+   [(org.concordion.api.Resource. \"/math/Algebra.html\") \"./algebra/Addition.md\"]
+   `href` is a path to a spec relative to the `resource`'s parent dir"
   [resource href]
   (let [fixture-var (specification->fixture resource href)]
     (run-specification

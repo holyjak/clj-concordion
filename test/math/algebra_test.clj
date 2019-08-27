@@ -25,8 +25,10 @@
    :concordion.option/declare-namespaces      []
    :cc/before-suite                           #(println "AdditionFixture: I run before each Suite")
    :cc/before-spec                            #(println "AdditionFixture: I run before e ach Spec")
+   ;:cc/before-example                         #(throw (RuntimeException. (str "fake exception in " %)))
    :cc/before-example                         #(println "AdditionFixture: I run before each example" %)
    :cc/after-example                          #(println "AdditionFixture: I run after each example" %)
+   ;;:cc/after-example                          #(throw (RuntimeException. (str "fake exception " %)))
    :cc/after-spec                             #(println "AdditionFixture: I run after each Spec")
    :cc/after-suite                            #(println "AdditionFixture: I run after each Suite")})
 

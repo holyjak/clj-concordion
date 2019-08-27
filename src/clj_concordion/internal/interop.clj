@@ -231,7 +231,9 @@
        (declareNamespaces [_] (into-array String (get opts :concordion.option/declare-namespaces []))))])
   (getFixturePathWithoutSuffix [_] (var->path fixture-var nil))
   (getDescription [_] (format "[Concordion Specification for '%s']"
-                              (:name (meta fixture-var)))))
+                              (:name (meta fixture-var))))
+  Object
+  (toString [_] (str (:name (meta fixture-var)))))
 
 (defn- wrap-with-fixture-type
   "TMP(hopefully): Currently Fixture.getFixtureType returns FixtureType instead of

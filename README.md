@@ -119,12 +119,21 @@ To be able to run tests repeatedly from the REPL, you need to reset the previous
 
 * [Concordion: Markdown Grammar](https://concordion.github.io/concordion/latest/spec/specificationType/markdown/Markdown.html)
 
-## Gotchas 
+## Troubleshooting
 
-1. You need to run `lein clean` if you change/rename the fixture
-   so that the class will be recompiled
-2. We use `clojure.test` underneath so you must follow its naming syntax for 
-  test namespaces, i.e. for example `<name>-test`
+### General
+
+When troubleshooting, [enable debug logging](https://github.com/clojure/tools.logging/blob/master/README.md) for 
+ namespaces `clj-concordion.*`.
+
+### Common problems
+
+#### Warning: The specification  with the fixture <spec> seems to have no asserts
+
+This warning is logged when the result from Concordion has zero all of the success, failure, and exception counts.
+It is OK to ignore if your `.md` file has indeed no asserts. But if it does and you expected to see some results then
+enable debug logging as described above, check carefully the output (also the terminal if you connect to a remote REPL),
+try to debug to find out what is Concordion doing.
 
 ## Status
 
