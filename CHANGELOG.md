@@ -1,5 +1,7 @@
 # Changelog
 
+* 0.1.1
+  * Don't swallow errors in `beforeExample`
 * 0.0.10
   * [breaking] Simplified, got rid of `gen-class`. Breaking: `deffixture` no longer takes a list of functions. We have now our own evaluator but it should be compatible with Concordion expressions. Arguments can be variables or constants.
 * 0.0.5
