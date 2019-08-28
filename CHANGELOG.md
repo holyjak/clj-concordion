@@ -1,5 +1,11 @@
 # Changelog
 
+* 0.2.0
+  * Allow use of `nil` and vectors inside Concordion expressions
+  * Expose `clojure.core`'s `get` and `get-in` so that they can be used
+    in expressions
+  * Add [Expression documentation](clj-concordion/expressions/Expressions.md)
+  * Fix: variables may now have `nil` value (e.g. when returned from a function call)
 * 0.1.1
   * Don't swallow errors in `beforeExample`
 * 0.0.10

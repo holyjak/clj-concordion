@@ -148,6 +148,8 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 ## TODO
 
 * Re-run tests also when the .md files changes - add the resources/ to the watch path
+* Add `:cc/no-asserts?` to stop logging "... seems to have no asserts"
+* Add, use `:cc/no-trim?`
 
 ## Implementation
 

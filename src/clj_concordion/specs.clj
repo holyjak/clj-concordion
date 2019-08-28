@@ -55,10 +55,12 @@
 
 (s/def :expr/arg (s/or
                    :variable symbol?
-                   :string string?
-                   :number number?
-                   :boolean boolean?
-                   :keyword keyword?))
+                   :string   string?
+                   :number   number?
+                   :boolean  boolean?
+                   :keyword  keyword?
+                   :nil      nil?
+                   :vector   (s/coll-of :expr/arg :kind vector?)))
 (s/def ::call-expr (s/cat
                      :function symbol?
                      :arguments (s/coll-of :expr/arg :kind sequential?)))

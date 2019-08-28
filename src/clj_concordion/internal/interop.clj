@@ -93,11 +93,13 @@
         {:expr expr :err e}))))
 
 (defn resolve-arg [vars var-sym idx]
-  (or
-    (get vars var-sym)
-    (throw (ex-info (format "Unknown argument `%s` at position %d (0-based). Known: %s"
-                            var-sym idx (or (keys vars) "<no vars>"))
-                    {:vars vars :var-sym var-sym :idx idx}))))
+  (let [res (get vars var-sym ::none)]
+    (if (#{::none} res)
+      (throw (ex-info (format "Unknown argument `%s` at position %s (0-based). Known: %s"
+                              var-sym idx (or (keys vars) "<no vars>"))
+                      {:vars vars :var-sym var-sym :idx idx}))
+      res)))
+
 
 (defn expr->edn
   "Sanitize a Concordion function call expression so that it is a valid EDN string."
@@ -108,7 +110,9 @@
       (cs/replace #"#" "")
       ;; 3. Replace nested '..' with ".." so that we can embed literal strings in Markdown
       ;; (Concordion always outputs ".." around the command as of 2.2.0, see org.pegdown.ToHtmlSerializer.printAttribute
-      (cs/replace #"\'" "\"")))
+      (cs/replace #"\'" "\"")
+      ;; 4. Ensure there is space around `=` so that `#result=fnCall()` will not make a single fn name `result=fnCall`
+      (cs/replace #"=" " = ")))
 
 (defn sym->qualified [ns unqualified-sym]
   (symbol ns (name unqualified-sym)))
@@ -125,25 +129,58 @@
       (assoc call-expr
         :set-var (:variable parsed)))))
 
+(comment
+
+  (->> "myfn(:has, [:vector])"
+       expr->edn
+       edn->data
+       #_(conform-or-fail ::specs/expr)
+       parse-expr-data
+       :arguments)
+
+  nil)
+
+(defn resolve-args
+  "Resolve the arguments inside an expression's function call, given the known variables `vars`"
+  ([vars arguments]
+   (resolve-args [] vars arguments))
+  ([path vars arguments]
+   (map-indexed
+     (fn [idx [tag val]]
+       ;; entry is something like [:number 32], [:string "hi"], [:variable myvar], ...
+       (let [path' (conj path idx)]
+         (case tag
+           :variable (resolve-arg vars val path')
+           :vector (vec (resolve-args path' val))
+           ; Default: Just return the (presumably primitive) value:
+           val)))
+     arguments)))
+
+(def exposed-clj-fns
+  "Core functions we make directly usable in expressions"
+  {'get #'clojure.core/get
+   'get-in #'clojure.core/get-in})
+
 (defn evaluate
   "Evaluate expressions from specifications such as `add(#arg1, #arg2)` given
    previously stored variables.
-   See `org.concordion.internal.OgnlEvaluator` for the original evaluator."
-  [vars-atom ns expr]
+   See `org.concordion.internal.OgnlEvaluator` for the original evaluator.
+
+   Params:
+   - `vars-atom` atom containing a map with known variables (symbol -> value)
+   - `ns` - the namespace where to look for symbols (functions) used in the expression
+   - `expr` - the expression"
+  [vars-atom ^String ns ^String expr]
   (try
     (let [vars @vars-atom
           expr-data   (-> expr expr->edn edn->data)
           {:keys [function arguments set-var single-var]} (parse-expr-data expr-data)
-          arg-vals (map-indexed
-                     (fn [idx entry]
-                       ;; entry is something like [:number 32], [:string "hi"], [:variable myvar], ...
-                       (if (#{:variable} (key entry))
-                         (resolve-arg vars (val entry) idx)
-                         (val entry)))
-                     arguments)
+          arg-vals (resolve-args vars arguments)
           fn-var   (or
                      single-var
                      (find-var (sym->qualified ns function))
+                     ;; Default functions supported
+                     (get exposed-clj-fns function)
                      (throw (ex-info (format "Could not find the expected function `%s/%s`"
                                              ns function)
                                      {:expr expr :ns ns :function function})))
@@ -161,8 +198,10 @@
                       e)))))
 
 (comment
-  (defonce _dbg (atom nil))
-  (evaluate {'n1 10 'n2 2} "clj-concordion.internal.interop" "_add(n1)"))
+  (defn _add [n] n)
+  (evaluate (atom {'n1 10}) "clj-concordion.internal.interop" "_add(n1)")
+  (evaluate (atom {'n1 nil}) "clj-concordion.internal.interop" "_add(n1)")
+  nil)
 
 (s/fdef evaluate
         :args (s/cat :vars-ref #(instance? clojure.lang.Atom %) :ns string? :expr string?)
