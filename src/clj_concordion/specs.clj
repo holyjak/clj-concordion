@@ -23,6 +23,8 @@
 (s/def :cc/after-example fn?)
 (s/def :cc/after-spec fn?)
 (s/def :cc/after-suite fn?)
+(s/def :cc/no-asserts? boolean?)
+(s/def :cc/no-trim? boolean?)
 (s/def :cc/opts
   (s/and
     (s/keys :opt [:concordion/fail-fast
@@ -36,7 +38,10 @@
                   :cc/before-example
                   :cc/after-example
                   :cc/after-spec
-                  :cc/after-suite])
+                  :cc/after-suite
+                  :cc/no-asserts?
+                  :cc/no-trim?])
+    ; Make the spec "closed" by preventing any unknown (mistyped?) key:
     (s/map-of #{:concordion/fail-fast
                 :concordion/fail-fast-exceptions
                 :concordion/impl-status
@@ -48,7 +53,9 @@
                 :cc/before-example
                 :cc/after-example
                 :cc/after-spec
-                :cc/after-suite}
+                :cc/after-suite
+                :cc/no-asserts?
+                :cc/no-trim?}
               (constantly true))))
 
 (s/def :cc/classname (s/or :str string? :sym symbol?))

@@ -49,14 +49,17 @@
   [name opts]
   {:pre [(or (symbol? name) #_(string? name))]}
   (assert-test-ns *ns*)
-  (let [var-sym name]
+  (let [var-sym name
+        no-asserts? (:cc/no-asserts? opts)]
     `(do
        ~(def-fixture-var* var-sym opts)
        (test/deftest ~(symbol (str var-sym "-test"))
          (let [result# (new-fixture-run (var ~var-sym))]
-           (when (zero? (+ (.getSuccessCount result#)
-                           (.getExceptionCount result#)
-                           (.getFailureCount result#)))
+           (when (and
+                   (not ~no-asserts?)
+                   (zero? (+ (.getSuccessCount result#)
+                             (.getExceptionCount result#)
+                             (.getFailureCount result#))))
              (println (str "Warning: The specification  with the fixture " (var ~var-sym)
                            " seems to have no asserts.")))
            (test/is (zero? (.getExceptionCount result#)))

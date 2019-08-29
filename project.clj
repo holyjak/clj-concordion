@@ -1,9 +1,9 @@
-(defproject clj-concordion "0.2.1-SNAPSHOT"
+(defproject clj-concordion "0.3.0"
   :description "clojure.test integration for https://concordion.org"
   :url "https://github.com/holyjak/clj-concordion"
   :license {:name "Unlicense"
             :url "https://choosealicense.com/licenses/unlicense/"}
-  :dependencies [[org.clojure/clojure "1.10.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
                  ;; Added here for IntelliJ's sake:
                  [org.concordion/concordion "2.2.0"]
                  [org.clojure/tools.logging "0.4.0"]]

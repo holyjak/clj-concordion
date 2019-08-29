@@ -217,13 +217,19 @@
   (reify EvaluatorFactory
     (createEvaluator [_ fixture]
       (let [fix-var (.getFixtureObject fixture)
+            opts     @fix-var
             vars    (atom {})
             ns      (name (ns-name (:ns (meta fix-var))))]
         (prn ns)
         (assert (var? fix-var) "Fixture object must be a Clojure var")
         (reify Evaluator
           (getVariable [_ name] (get @vars (concord-var->sym name)))
-          (setVariable [_ name value] (swap! vars assoc (concord-var->sym name) value))
+          (setVariable [_ name value]
+            (swap! vars assoc
+                   (concord-var->sym name)
+                   (if (:cc/no-trim? opts)
+                     value
+                     (some-> value clojure.string/trim))))
           (evaluate [_ expr]
             (try
               (evaluate vars ns expr)

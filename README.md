@@ -80,18 +80,27 @@ The expressions are a subset & superset of EDN and thus:
 * Constants are supported. Ex.: `[ ](- "myFn(#var1, 'literal string', 123)")`  
 * Keywords are allowed: `"doSomething(:action 'fire!')"`
 * Commas are optional
-* Spaces between elements are _required_. Ex.: `#var = myFn()` will work but `#var=myFn()` will fail.
+* Spaces between elements may be _necessary_ (since `=` is a valid part of name in Clojure but in
+  an expression we most likely want to break around it)
 * Special handling of `'` and `#`: all `'` are replaced with `"` and all `#` are removed.
-  This can conflict with test values that contain them - report an issue if it happens.  
+  This can conflict with test values that contain them - report an issue if it happens. 
+  
+See the [Expression specification](clj-concordion/expressions/Expressions.md) for details.
 
 #### Options
 
-Notice that `deffixture` takes a second, optional parameter, a map of options - see the spec for valid keys and 
+Notice that `deffixture` takes a second, optional parameter, a map of options - see the `:cc/opts` Clojure spec for valid keys and 
 [FixtureDeclarations](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
- [ConcordionOptions](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java)
-and [Concordion docs](https://concordion.github.io/concordion/latest/spec/annotation/ConcordionOptions.html) for their meaning.
+ [ConcordionOptions](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java),
+ [Concordion docs](https://concordion.github.io/concordion/latest/spec/annotation/ConcordionOptions.html) and below for their meaning.
+ 
+##### clj-concordion specific options
 
-#### Setup & tear-down functions
+* `:cc/no-asserts?` - if `true` do not log a warning when the specification has no asserts (i.e. `?=...`, `c:assertTrue=...` etc). 
+* `:cc/no-trim?` - if `true` do not `trim` variable values (which we do because Concordion includes an extraneous whitespace in table-initialized variables)
+* `:cc/(before|after)-*` - see below
+
+##### Setup & tear-down functions
 
 The `opts` argument to `deffixture` can also contain setup/tear-down functions run at different points of the lifecycle:
 
@@ -99,8 +108,8 @@ The `opts` argument to `deffixture` can also contain setup/tear-down functions r
 (cc/deffixture Addition
   {:cc/before-suite   #(println "AdditionFixture: I run before each Suite")
    :cc/before-spec    #(println "AdditionFixture: I run before each Spec")
-   :cc/before-example #(println "AdditionFixture: I run before each example")
-   :cc/after-example  #(println "AdditionFixture: I run after each example")
+   :cc/before-example (fn [exname] (println "AdditionFixture: I run before example" exname))
+   :cc/after-example  (fn [exname] (println "AdditionFixture: I run after example" exname))
    :cc/after-spec     #(println "AdditionFixture: I run after each Spec")
    :cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
 ```
@@ -131,8 +140,9 @@ When troubleshooting, [enable debug logging](https://github.com/clojure/tools.lo
 #### Warning: The specification  with the fixture <spec> seems to have no asserts
 
 This warning is logged when the result from Concordion has zero all of the success, failure, and exception counts.
-It is OK to ignore if your `.md` file has indeed no asserts. But if it does and you expected to see some results then
-enable debug logging as described above, check carefully the output (also the terminal if you connect to a remote REPL),
+It is OK to ignore if your `.md` file has indeed no asserts and you can disable it by setting the options
+`{:cc/no-asserts? true}` on the `deffixture`. But if the spec has asserts and you expected to see some results then
+something went wrong. Enable debug logging as described above, check carefully the output (also the terminal if you connect to a remote REPL),
 try to debug to find out what is Concordion doing.
 
 ## Status
@@ -148,8 +158,6 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 ## TODO
 
 * Re-run tests also when the .md files changes - add the resources/ to the watch path
-* Add `:cc/no-asserts?` to stop logging "... seems to have no asserts"
-* Add, use `:cc/no-trim?`
 
 ## Implementation
 

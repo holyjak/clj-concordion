@@ -1,5 +1,8 @@
 # Changelog
 
+* 0.3.0
+  * Automatically trim variable values - useful because Concordion 2.2.0 somehow includes an extra space in values of variables initialized from a table; prevent with `:cc/no-trim?`
+  * Add the option `:cc/no-asserts?` - to prevent warning when the specification has no asserts
 * 0.2.0
   * Allow use of `nil` and vectors inside Concordion expressions
   * Expose `clojure.core`'s `get` and `get-in` so that they can be used
