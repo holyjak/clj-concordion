@@ -56,7 +56,10 @@
                ;; recorded in the results summary
                (if (instance? FailFastException e)
                  (throw e)
-                 (log/info e "Example '" % "' failed with an exception. Continuing because it is not configured in `:concordion/fail-fast[-exceptions]`; the test will be marked as failed.")))
+                 (log/info
+                   (when-not (instance? org.concordion.internal.ConcordionAssertionError e)
+                     e)
+                   "Example '" % "' failed with the exception <" e ">. Continuing because it is not configured in `:concordion/fail-fast[-exceptions]`; the test will be marked as failed.")))
              (finally
                (.afterExample fixture %))))
         examples))))
