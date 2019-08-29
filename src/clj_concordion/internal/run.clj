@@ -43,7 +43,7 @@
   (let [ftype (.getFixtureType fixture)
         examples (.getExampleNames concordion ftype)]
     (assert-unique-examples fixture examples)
-    (log/debug "run-fixture-examples: examples found in " (.getFixtureObject fixture) ": " examples)
+    (log/debug "run-fixture-examples: examples found in " (.getFixtureObject fixture) ": " (str examples))
     (doall
       (map
         #(do
