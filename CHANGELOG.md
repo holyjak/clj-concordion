@@ -1,5 +1,8 @@
 # Changelog
 
+* 1.0.1
+  * Less noisy output - no more ConcordionAssertionError stacktraces
+  * Nicer logging of example names in a spec
 * 1.0.0 Rebranding of version 0.3.0
 * 0.3.0
   * Automatically trim variable values - useful because Concordion 2.2.0 somehow includes an extra space in values of variables initialized from a table; prevent with `:cc/no-trim?`
