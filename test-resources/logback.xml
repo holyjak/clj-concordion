@@ -1,0 +1,16 @@
+<configuration scan="true" debug="false">
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d %-5level %logger{0}: %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.concordion"  level="DEBUG">
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="clj-concordion"  level="DEBUG">
+        <appender-ref ref="console"/>
+    </logger>
+
+</configuration>

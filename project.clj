@@ -10,5 +10,7 @@
   :aot [clj-concordion.internal.interop clj-concordion.internal.run] ;; -> Java classes for Concordion interop
   :plugins [[lein-auto "0.1.3"]]
   :repl-options {:init-ns clj-concordion.core}
-  :profiles {:test {:dependencies [[io.aviso/pretty "0.1.37"]]}
+  :profiles {:test {:dependencies [[io.aviso/pretty "0.1.37"]
+                                   [ch.qos.logback/logback-classic "1.2.3"]]
+                    :resource-paths ["test-resources"]}
              :debug {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"]}})
