@@ -1,5 +1,8 @@
 # Changelog
 
+* 1.0.2
+  * Don't require both `:concordion/fail-fast` and `:concordion/fail-fast-exceptions` -  if you only set `fail-fast` it will stop on any `Throwable`
+    and if you set `fail-fast-exceptions` then `fail-fast` will be also set to `true`
 * 1.0.1
   * Less noisy output - no more ConcordionAssertionError stacktraces
   * Nicer logging of example names in a spec

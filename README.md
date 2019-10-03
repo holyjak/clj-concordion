@@ -89,11 +89,26 @@ See the [Expression specification](clj-concordion/expressions/Expressions.md) fo
 
 #### Options
 
-Notice that `deffixture` takes a second, optional parameter, a map of options - see the `:cc/opts` Clojure spec for valid keys and 
-[FixtureDeclarations](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
- [ConcordionOptions](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java),
- [Concordion docs](https://concordion.github.io/concordion/latest/spec/annotation/ConcordionOptions.html) and below for their meaning.
+Notice that `deffixture` takes a second, optional parameter, a map of options - [see the `:cc/opts` Clojure spec for valid keys and values](/holyjak/clj-concordion/blob/master/src/clj_concordion/specs.clj) and 
+Concordion [Fixture classes docs](https://concordion.org/coding/java/markdown/#fixture-classes) (-> 
+[FixtureDeclarations.java](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
+ [ConcordionOptions.java](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java),
+ [ConcordionOptions spec](https://concordion.github.io/concordion/latest/spec/annotation/ConcordionOptions.html)) and below for their meaning.
+ There is also an extensive [example in the `Addition deffixture`](https://github.com/holyjak/clj-concordion/blob/master/test/math/algebra_test.clj)
  
+The options map replaces Concordion annotations on test classes (e.g. using `:concordion/impl-status :unimplemented` instead of `@Unimplemented`,
+an individual `:concordion.option/<option-name>` instead of `@ConcordionOptions(<optionName>=..)`, `@FailFast(onExceptionType={DatabaseUnavailableException.class})` -> 
+`:concordion/fail-fast-exceptions [Throwable]`) etc.), annotations on test methods such as [Before and After Hooks][before-after-hooks], and exposes additional configuration (see below).
+
+[before-after-hooks]: https://concordion.github.io/concordion/latest/spec/annotation/BeforeAndAfterMethodHooks.html
+
+
+##### Unsupported Concordion options
+
+* There is yet no support for [adding resources ~ `@ConcordionResources`](https://concordion.org/coding/java/markdown/#adding-resources) because I haven't figured out how to enable doing it for all / subset of fixtures instead of just a single fixture. Suggestions welcome!
+* ` @FullOGNL` because we use our own expression implementation instead of OGNL (and it provides ± the same power, if not more)
+* [Adding Extensions with `@org.concordion.api.extension.Extensions`](https://concordion.github.io/concordion/latest/spec/common/extension/ExtensionConfiguration.html) - you can do this instead by setting the system property `concordion.extensions`
+
 ##### clj-concordion specific options
 
 * `:cc/no-asserts?` - if `true` do not log a warning when the specification has no asserts (i.e. `?=...`, `c:assertTrue=...` etc). 
@@ -102,7 +117,7 @@ Notice that `deffixture` takes a second, optional parameter, a map of options - 
 
 ##### Setup & tear-down functions
 
-The `opts` argument to `deffixture` can also contain setup/tear-down functions run at different points of the lifecycle:
+The `opts` argument to `deffixture` can also contain [setup/tear-down functions][before-after-hooks] run at different points of the lifecycle:
 
 ```clojure
 (cc/deffixture Addition
@@ -114,15 +129,23 @@ The `opts` argument to `deffixture` can also contain setup/tear-down functions r
    :cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
 ```
 
-##### Troubleshooting: Fail fast upon exception
+##### Troubleshooting: Fail fast upon an exception
 
 If your tests fail due to an exception, you may instruct Concordion to stop at once when the exception is thrown so that
-you can examine the runtime state, using the following options:
+you can examine the runtime state, using the following option:
 
 ```clojure
-:concordion/fail-fast                      true
-:concordion/fail-fast-exceptions           [Throwable] ; = any; or more concrete class(es)
+:concordion/fail-fast true
+; same as `:concordion/fail-fast-exceptions #{Throwable}`
 ```
+
+Or, if you only want to stop for particular exceptions:
+
+```clojure
+:concordion/fail-fast-exceptions #{my.app.MyBizException, my.app.AnotherException}
+```
+
+(Notice that `:concordion/fail-fast` and `:concordion/fail-fast-exceptions` are mutually exclusive, you only ever need one of them.)
 
 #### REPL development
 

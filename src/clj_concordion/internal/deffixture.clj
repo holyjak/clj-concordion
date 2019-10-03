@@ -46,10 +46,16 @@
     (run-specification fixture true)))
 
 (defn deffixture*
-  [name opts]
+  [name {:concordion/keys [fail-fast fail-fast-exceptions] :as opts}]
   {:pre [(or (symbol? name) #_(string? name))]}
   (assert-test-ns *ns*)
-  (let [var-sym name
+  (let [opts'   (cond-> opts
+                        (and fail-fast (empty? fail-fast-exceptions))
+                        (assoc :concordion/fail-fast-exceptions #{Throwable})
+
+                        (seq fail-fast-exceptions)
+                        (assoc :concordion/fail-fast true))
+        var-sym name
         no-asserts? (:cc/no-asserts? opts)]
     `(do
        ~(def-fixture-var* var-sym opts)

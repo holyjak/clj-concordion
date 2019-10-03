@@ -11,12 +11,12 @@
 ;; Fixture options from FixtureDeclarations
 (s/def :concordion/fail-fast boolean?)
 (s/def ::exception-class (s/and class? #(isa? % Throwable)))
-(s/def :concordion/fail-fast-exceptions (s/coll-of ::exception-class))
+(s/def :concordion/fail-fast-exceptions (s/coll-of ::exception-class :min-count 1 :distinct true))
 (s/def :concordion/impl-status (-> impl-status keys set))
 ;; From ConcordionOptions:
 (s/def :concordion.option/markdown-extensions (s/coll-of #(instance? MarkdownExtensions %)))
 (s/def :concordion.option/copy-source-html-to-dir string?)
-(s/def :concordion.option/declare-namespaces (s/coll-of string?))
+(s/def :concordion.option/declare-namespaces (s/coll-of string? :kind sequential?))
 (s/def :cc/before-suite fn?)
 (s/def :cc/before-spec fn?)
 (s/def :cc/before-example fn?)

@@ -17,12 +17,12 @@
   (str s1 s2))
 
 (cc/deffixture Addition
-  {:concordion/fail-fast                      true
-   :concordion/fail-fast-exceptions           [IndexOutOfBoundsException]
+  {;:concordion/fail-fast                      true - implied by `:concordion/fail-fast-exceptions`
+   :concordion/fail-fast-exceptions           #{IndexOutOfBoundsException}
    :concordion/impl-status                    :expected-to-pass
    :concordion.option/markdown-extensions     [MarkdownExtensions/FENCED_CODE_BLOCKS]
    :concordion.option/copy-source-html-to-dir "/tmp/conc-copy"
-   :concordion.option/declare-namespaces      []
+   :concordion.option/declare-namespaces      ["ext" "urn:concordion-extensions:2010", "foo" "http://foo"]
    :cc/before-suite                           #(println "AdditionFixture: I run before each Suite")
    :cc/before-spec                            #(println "AdditionFixture: I run before e ach Spec")
    ;:cc/before-example                         #(throw (RuntimeException. (str "fake exception in " %)))
