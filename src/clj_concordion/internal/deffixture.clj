@@ -56,9 +56,9 @@
                         (seq fail-fast-exceptions)
                         (assoc :concordion/fail-fast true))
         var-sym name
-        no-asserts? (:cc/no-asserts? opts)]
+        no-asserts? (:cc/no-asserts? opts')]
     `(do
-       ~(def-fixture-var* var-sym opts)
+       ~(def-fixture-var* var-sym opts')
        (test/deftest ~(symbol (str var-sym "-test"))
          (let [result# (new-fixture-run (var ~var-sym))]
            (when (and
