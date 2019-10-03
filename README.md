@@ -114,6 +114,16 @@ The `opts` argument to `deffixture` can also contain setup/tear-down functions r
    :cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
 ```
 
+##### Troubleshooting: Fail fast upon exception
+
+If your tests fail due to an exception, you may instruct Concordion to stop at once when the exception is thrown so that
+you can examine the runtime state, using the following options:
+
+```clojure
+:concordion/fail-fast                      true
+:concordion/fail-fast-exceptions           [Throwable] ; = any; or more concrete class(es)
+```
+
 #### REPL development
 
 To be able to run tests repeatedly from the REPL, you need to reset the previously cached results:

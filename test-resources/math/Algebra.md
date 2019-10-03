@@ -14,4 +14,4 @@ Subtracting [7](- "#n2") from [4](- "#n1") yields [-3](- "?=subtract(#n1, #n2)")
  
 ## Sub-specs
 
-* [Addition](./algebra/Addition.md "c:run")
+* [Addition](algebra/Addition.md "c:run")

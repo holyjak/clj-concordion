@@ -61,7 +61,7 @@
      - methods - a vector of 1+ functions that will be exposed as methods on the fixture object.
                The function parameters and return value may be type-hinted as `^int` or `^bool`,
                the default being `^String` (the only 3 types supported by Concordion).
-     - opts   - options defined by org.concordion.api.FixtureDeclarations, as qualified keywords
+     - opts   - options for Concordion and this. See the spec for `:cc/opts` and the README for explanation
 
    Example:
      Given the spec math/Addition.md with `yields [4](- \"?=add(#n1, #n2)\")`
