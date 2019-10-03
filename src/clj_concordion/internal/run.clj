@@ -9,7 +9,8 @@
     (org.concordion.api Fixture FixtureDeclarations ResultSummary Runner)
     (org.concordion.internal FixtureRunner
                              FailFastException RunOutput)
-    (org.concordion.internal.cache RunResultsCache)))
+    (org.concordion.internal.cache RunResultsCache)
+    (java.io PrintStream ByteArrayOutputStream)))
 
 (def ^RunResultsCache runResultsCache RunResultsCache/SINGLETON)
 
@@ -82,7 +83,14 @@
     (.getModifiedResultSummary)))
 
 (defn print-result [^ResultSummary res ^FixtureDeclarations ftype]
-  (.print res System/out ftype))
+  ;; Print via Clojure's print -> *out* so that it appears in the correct REPL output
+  (let [baos (ByteArrayOutputStream.)
+        out  (PrintStream.
+               baos
+               true
+               "UTF-8")]
+    (.print res out ftype)
+    (print (.toString baos "UTF-8"))))
 
 (defn ^ResultSummary run-specification
   "The entry point into testing a specification, represented by the given `fixture`.
