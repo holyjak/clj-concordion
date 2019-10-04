@@ -35,7 +35,8 @@
 ;;---------------------------------------------------------------------- resetting, test support
 
 (defn reset-concordion!
-  "Reset the results cache so that all tests will run anew."
+  "Reset the results cache so that all tests will run anew instead of returning
+  old, cached results. Intended for use from a REPL."
   []
   (run!
     (fn [^Fixture fixture]
@@ -52,13 +53,18 @@
 (defmacro test-fixture
   "Test the specification associated with the fixture
   (by invoking the underlying clojure.test test function).
+  Intended for use from a REPL.
 
   Useful in combination with the `:concordion/fail-fast` option when you want to
   run only the one problematic specification instead of all the specs [in the ns].
 
   Ex.:
-   `(deffixture Xyz {:concordion/fail-fast true}) (test-fixture Xyz)`"
+   `(deffixture Xyz {:concordion/fail-fast true}) (test-fixture Xyz)`
+
+   (Note: It also does `reset-concordion!` since even if added as a hook, it
+   wouldn't be invoked.)"
   [fname]
+  (reset-concordion!)
   (test/test-var
     (resolve (symbol (str (name fname) "-test")))))
 

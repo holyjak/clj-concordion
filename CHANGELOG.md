@@ -1,6 +1,9 @@
 # Changelog
 
-* 1.0.5
+* 1.0.6
+  * Fix `cc/test-fixture` to also `(reset-concordion!)` since `clojure.test/use-fixtures`
+    is ignored when invoking individual test functions
+* 1.0.5 (Use 1.0.6 instead!)
   * Add `cc/test-fixture` for testing a single specification
 * 1.0.4
   * Stop at first test failure with `:concordion/fail-fast true|:failures`
