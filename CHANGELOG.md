@@ -1,5 +1,7 @@
 # Changelog
 
+* 1.0.5
+  * Add `cc/test-fixture` for testing a single specification
 * 1.0.4
   * Stop at first test failure with `:concordion/fail-fast true|:failures`
 * 1.0.3

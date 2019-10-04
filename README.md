@@ -143,6 +143,15 @@ exception so that you can examine the runtime state. Use the following options:
 (Notice that it is only meaningful to include both options if you use `fail-fast-exceptions` to limit to subclass(es) 
 and `fail-fast true` so that it also stops for test failures.)
 
+**BEWARE** The "fail fast" applies only to a single fixture / specification. If you want to make sure that only a single
+fixture runs then use `test-fixture` to run only it:
+
+```clojure
+(ns my.xy-test (:require [clj-concordion.core :as cc])
+(cc/deffixture Addition {:concordion/fail-fast true})
+(cc/test-fixture Addition) ;; normally you'd run this from the REPL...
+```
+
 #### REPL development
 
 To be able to run tests repeatedly from the REPL, you need to reset the previously cached results:

@@ -4,7 +4,8 @@
     [clj-concordion.internal.deffixture :refer [deffixture* fixtures]]
     [clj-concordion.internal.utils :refer :all]
     [clj-concordion.internal.interop :refer :all]
-    [clojure.spec.alpha :as s])
+    [clojure.spec.alpha :as s]
+    [clojure.test :as test])
   (:import
     (org.concordion.api Fixture)))
 
@@ -31,7 +32,7 @@
           (.afterSuite fixture-meta)))
       result))
 
-;;---------------------------------------------------------------------- resetting
+;;---------------------------------------------------------------------- resetting, test support
 
 (defn reset-concordion!
   "Reset the results cache so that all tests will run anew."
@@ -47,6 +48,22 @@
   [f]
   (reset-concordion!)
   (f))
+
+(defmacro test-fixture
+  "Test the specification associated with the fixture
+  (by invoking the underlying clojure.test test function).
+
+  Useful in combination with the `:concordion/fail-fast` option when you want to
+  run only the one problematic specification instead of all the specs [in the ns].
+
+  Ex.:
+   `(deffixture Xyz {:concordion/fail-fast true}) (test-fixture Xyz)`"
+  [fname]
+  (test/test-var
+    (resolve (symbol (str (name fname) "-test")))))
+
+(s/fdef test-fixture
+  :args (s/cat :fixture-name symbol?))
 
 ;;---------------------------------------------------------------------- the deffixture macro & friends
 
