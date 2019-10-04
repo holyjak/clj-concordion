@@ -45,17 +45,20 @@
     (do (swap! fixtures conj fixture)) ;; store for (reset-concordion!)
     (run-specification fixture true)))
 
+(defn set-derived-options [{:concordion/keys [fail-fast fail-fast-exceptions] :as opts}]
+  (cond-> opts
+          (and (#{true :exceptions} fail-fast) (empty? fail-fast-exceptions))
+          (assoc :concordion/fail-fast-exceptions #{Throwable})
+
+          (and (seq fail-fast-exceptions) (not fail-fast))
+          (assoc :concordion/fail-fast :exceptions)))
+
 (defn deffixture*
-  [name {:concordion/keys [fail-fast fail-fast-exceptions] :as opts}]
+  [name opts]
   {:pre [(or (symbol? name) #_(string? name))]}
   (assert-test-ns *ns*)
-  (let [opts'   (cond-> opts
-                        (and fail-fast (empty? fail-fast-exceptions))
-                        (assoc :concordion/fail-fast-exceptions #{Throwable})
-
-                        (seq fail-fast-exceptions)
-                        (assoc :concordion/fail-fast true))
-        var-sym name
+  (let [opts'       (set-derived-options opts)
+        var-sym     name
         no-asserts? (:cc/no-asserts? opts')]
     `(do
        ~(def-fixture-var* var-sym opts')

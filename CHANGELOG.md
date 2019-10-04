@@ -1,5 +1,7 @@
 # Changelog
 
+* 1.0.4
+  * Stop at first test failure with `:concordion/fail-fast true|:failures`
 * 1.0.3
   * Fix 1.0.2 to actually do what it says
   * Print output .html names to REPL and not (just) in the terminal where the repl was started

@@ -129,23 +129,19 @@ The `opts` argument to `deffixture` can also contain [setup/tear-down functions]
    :cc/after-suite    #(println "AdditionFixture: I run after each Suite")})
 ```
 
-##### Troubleshooting: Fail fast upon an exception
+##### Troubleshooting: Fail fast upon an exception or a failure
 
-If your tests fail due to an exception, you may instruct Concordion to stop at once when the exception is thrown so that
-you can examine the runtime state, using the following option:
+You can instruct clj-concordion to stop at once when a test fails or throws an
+exception so that you can examine the runtime state. Use the following options:
 
-```clojure
-:concordion/fail-fast true
-; same as `:concordion/fail-fast-exceptions #{Throwable}`
-```
+* `:concordion/fail-fast true` - stop on the first failure or exception
+* `:concordion/fail-fast :failures` - stop on the first failure
+* `:concordion/fail-fast :exceptions`  - stop on the first exception; same as `:concordion/fail-fast-exceptions #{Throwable}`
+* `:concordion/fail-fast-exceptions #{my.app.MyBizException, my.app.AnotherException}` - stop on the first exception of a matching type; can be combined with 
+   `:concordion/fail-fast true` to also stop on test failures
 
-Or, if you only want to stop for particular exceptions:
-
-```clojure
-:concordion/fail-fast-exceptions #{my.app.MyBizException, my.app.AnotherException}
-```
-
-(Notice that `:concordion/fail-fast` and `:concordion/fail-fast-exceptions` are mutually exclusive, you only ever need one of them.)
+(Notice that it is only meaningful to include both options if you use `fail-fast-exceptions` to limit to subclass(es) 
+and `fail-fast true` so that it also stops for test failures.)
 
 #### REPL development
 

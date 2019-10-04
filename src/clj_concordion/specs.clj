@@ -8,9 +8,14 @@
                   :ignored          ImplementationStatus/IGNORED
                   :unimplemented    ImplementationStatus/UNIMPLEMENTED})
 
-;; Fixture options from FixtureDeclarations
-(s/def :concordion/fail-fast boolean?)
+;;;; Fixture options from FixtureDeclarations ;;;;
+;; Fail fast upon the first exception if true|:all|:exceptions (a Throwable) and/or
+;; the first test failure if true|:all|:failures
+(s/def :concordion/fail-fast (s/or
+                               :bool boolean?
+                               :kwd #{:failures :exceptions}))
 (s/def ::exception-class (s/and class? #(isa? % Throwable)))
+;; A collection of the exceptions that should stop the tests at once; implies `:concordion/fail-fast :exceptions`
 (s/def :concordion/fail-fast-exceptions (s/coll-of ::exception-class :min-count 1 :distinct true))
 (s/def :concordion/impl-status (-> impl-status keys set))
 ;; From ConcordionOptions:

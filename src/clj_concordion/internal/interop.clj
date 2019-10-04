@@ -265,7 +265,7 @@
   FixtureDeclarations
   (getFixtureClass [_] (:cc/class (meta fixture-var)))
   (declaresFullOGNL [_] false) ;; We don't use the default OGNL evaluator so it has no meaning
-  (declaresFailFast [_] (get opts :concordion/fail-fast false))
+  (declaresFailFast [_] (boolean (#{true :exceptions} (:concordion/fail-fast opts))))
   (getDeclaredFailFastExceptions [_] (into-array Class (get opts :concordion/fail-fast-exceptions [])))
   (declaresResources [_] false) ;; FIXME Unusable without annotations; change in API to return a list of @ConcordionResources ? - talk to devs
   (getDeclaredImplementationStatus [_] (ccs/impl-status (get opts :concordion/impl-status :expected-to-pass)))

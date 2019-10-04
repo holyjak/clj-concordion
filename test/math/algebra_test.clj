@@ -17,7 +17,7 @@
   (str s1 s2))
 
 (cc/deffixture Addition
-  {;:concordion/fail-fast                      true - implied by `:concordion/fail-fast-exceptions`
+  {:concordion/fail-fast                      true
    :concordion/fail-fast-exceptions           #{IndexOutOfBoundsException}
    :concordion/impl-status                    :expected-to-pass
    :concordion.option/markdown-extensions     [MarkdownExtensions/FENCED_CODE_BLOCKS]
