@@ -1,4 +1,4 @@
-(defproject clj-concordion "1.0.6"
+(defproject clj-concordion "1.0.7-SNAPSHOT"
   :description "clojure.test integration for https://concordion.org"
   :url "https://github.com/holyjak/clj-concordion"
   :license {:name "Unlicense"
