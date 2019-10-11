@@ -6,7 +6,7 @@ a Specification By Example tool.
 With Concordion, you can write high-level specification of features in Markdown
 and document them with examples. Hidden instrumentation (in the form of magic links)
 binds the examples to functions in your Fixture classes making it possible to verify
-them against the code. When you run your test runner, Concordion does generate 
+them against the code. When you run your test runner, Concordion does generate
 HTML files incorporating results of the passed or failed examples/tests.
 
 ![](https://concordion.org/img/how-it-works-markdown.png)
@@ -77,27 +77,27 @@ some consequences, both positive and negative.
 
 The expressions are a subset & superset of EDN and thus:
 
-* Constants are supported. Ex.: `[ ](- "myFn(#var1, 'literal string', 123)")`  
+* Constants are supported. Ex.: `[ ](- "myFn(#var1, 'literal string', 123)")`
 * Keywords are allowed: `"doSomething(:action 'fire!')"`
 * Commas are optional
 * Spaces between elements may be _necessary_ (since `=` is a valid part of name in Clojure but in
   an expression we most likely want to break around it)
 * Special handling of `'` and `#`: all `'` are replaced with `"` and all `#` are removed.
-  This can conflict with test values that contain them - report an issue if it happens. 
-  
+  This can conflict with test values that contain them - report an issue if it happens.
+
 See the [Expression specification](clj-concordion/expressions/Expressions.md) for details.
 
 #### Options
 
-Notice that `deffixture` takes a second, optional parameter, a map of options - [see the `:cc/opts` Clojure spec for valid keys and values](/holyjak/clj-concordion/blob/master/src/clj_concordion/specs.clj) and 
-Concordion [Fixture classes docs](https://concordion.org/coding/java/markdown/#fixture-classes) (-> 
+Notice that `deffixture` takes a second, optional parameter, a map of options - [see the `:cc/opts` Clojure spec for valid keys and values](/holyjak/clj-concordion/blob/master/src/clj_concordion/specs.clj) and
+Concordion [Fixture classes docs](https://concordion.org/coding/java/markdown/#fixture-classes) (->
 [FixtureDeclarations.java](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
  [ConcordionOptions.java](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java),
  [ConcordionOptions spec](https://concordion.github.io/concordion/latest/spec/annotation/ConcordionOptions.html)) and below for their meaning.
  There is also an extensive [example in the `Addition deffixture`](https://github.com/holyjak/clj-concordion/blob/master/test/math/algebra_test.clj)
- 
+
 The options map replaces Concordion annotations on test classes (e.g. using `:concordion/impl-status :unimplemented` instead of `@Unimplemented`,
-an individual `:concordion.option/<option-name>` instead of `@ConcordionOptions(<optionName>=..)`, `@FailFast(onExceptionType={DatabaseUnavailableException.class})` -> 
+an individual `:concordion.option/<option-name>` instead of `@ConcordionOptions(<optionName>=..)`, `@FailFast(onExceptionType={DatabaseUnavailableException.class})` ->
 `:concordion/fail-fast-exceptions [Throwable]`) etc.), annotations on test methods such as [Before and After Hooks][before-after-hooks], and exposes additional configuration (see below).
 
 [before-after-hooks]: https://concordion.github.io/concordion/latest/spec/annotation/BeforeAndAfterMethodHooks.html
@@ -111,7 +111,7 @@ an individual `:concordion.option/<option-name>` instead of `@ConcordionOptions(
 
 ##### clj-concordion specific options
 
-* `:cc/no-asserts?` - if `true` do not log a warning when the specification has no asserts (i.e. `?=...`, `c:assertTrue=...` etc). 
+* `:cc/no-asserts?` - if `true` do not log a warning when the specification has no asserts (i.e. `?=...`, `c:assertTrue=...` etc).
 * `:cc/no-trim?` - if `true` do not `trim` variable values (which we do because Concordion includes an extraneous whitespace in table-initialized variables)
 * `:cc/(before|after)-*` - see below
 
@@ -137,17 +137,17 @@ exception so that you can examine the runtime state. Use the following options:
 * `:concordion/fail-fast true` - stop on the first failure or exception
 * `:concordion/fail-fast :failures` - stop on the first failure
 * `:concordion/fail-fast :exceptions`  - stop on the first exception; same as `:concordion/fail-fast-exceptions #{Throwable}`
-* `:concordion/fail-fast-exceptions #{my.app.MyBizException, my.app.AnotherException}` - stop on the first exception of a matching type; can be combined with 
+* `:concordion/fail-fast-exceptions #{my.app.MyBizException, my.app.AnotherException}` - stop on the first exception of a matching type; can be combined with
    `:concordion/fail-fast true` to also stop on test failures
 
-(Notice that it is only meaningful to include both options if you use `fail-fast-exceptions` to limit to subclass(es) 
+(Notice that it is only meaningful to include both options if you use `fail-fast-exceptions` to limit to subclass(es)
 and `fail-fast true` so that it also stops for test failures.)
 
 **BEWARE** The "fail fast" applies only to a single fixture / specification. If you want to make sure that only a single
 fixture runs then use `test-fixture` to run only it:
 
 ```clojure
-(ns my.xy-test (:require [clj-concordion.core :as cc])
+(ns my.xy-test (:require [clj-concordion.core :as cc]))
 (cc/deffixture Addition {:concordion/fail-fast true})
 (cc/test-fixture Addition) ;; normally you'd run this from the REPL...
 ```
@@ -170,7 +170,7 @@ To be able to run tests repeatedly from the REPL, you need to reset the previous
 
 ### General
 
-When troubleshooting, [enable debug logging](https://github.com/clojure/tools.logging/blob/master/README.md) for 
+When troubleshooting, [enable debug logging](https://github.com/clojure/tools.logging/blob/master/README.md) for
  namespaces `clj-concordion.*`.
 
 ### Common problems
@@ -185,9 +185,7 @@ try to debug to find out what is Concordion doing.
 
 ## Status
 
-Alpha. Core features supported but there are certainly many rough corners and lurking bugs.
-
-### Limitations
+Stable. We expect small releases with bug fixes and occasional additional functionality as requested by the library users.
 
 ## Changelog
 
@@ -199,14 +197,14 @@ Alpha. Core features supported but there are certainly many rough corners and lu
 
 ## Implementation
 
-NOTE: Concordion normally uses [OGNL](https://commons.apache.org/proper/commons-ognl/) to map function calls 
+NOTE: Concordion normally uses [OGNL](https://commons.apache.org/proper/commons-ognl/) to map function calls
 and property access in the specification to the fixture class. We replace it with
 our own evaulator so that we don't need to generate classes from Clojure.
 
 How is a specification test invoked:
 
 > There's 2 places where the test runner is called:
-  
+
 > Directly when invoking a test - eg. the JUnit4 ConcordionRunner, the JUnit3 ConcordionTestCase. These call FixtureRunner which calls ConcordionBuilder. You're likely to want to create something similar to ConcordionTestCase and FixtureRunner, then reuse ConcordionBuilder - eg, see Mark Derricutt's basic TestNG runner. This was created way back for Concordion 1.3.1 - you'll need to implement the Fixture and FixtureDeclarations interfaces from Concordion 2.0.0 onwards.
 >
 > Indirectly, from a Concordion Suite, when the concordion:run command is encountered in a specification, spawning a new test within a test. If you want to support the concordion:run command, this is where the Runner / DefaultConcordionRunner comes in. By default ConcordionBuilder plugs in a SystemPropertiesRunnerFactory which lets you override the Runner with a system property. If this doesn't suit, we could open up withRunnerFactory as an extension method - rather than overriding RunStrategy which is designed to cater for different strategies for invoking the Runner.

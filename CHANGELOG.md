@@ -1,5 +1,6 @@
 # Changelog
 
+* 1.0.7 - doc fix
 * 1.0.6
   * Fix `cc/test-fixture` to also `(reset-concordion!)` since `clojure.test/use-fixtures`
     is ignored when invoking individual test functions
