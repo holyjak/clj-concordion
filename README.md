@@ -85,7 +85,7 @@ The expressions are a subset & superset of EDN and thus:
 * Special handling of `'` and `#`: all `'` are replaced with `"` and all `#` are removed.
   This can conflict with test values that contain them - report an issue if it happens.
 
-See the [Expression specification](clj-concordion/expressions/Expressions.md) for details.
+See the [Expression specification](/holyjak/clj-concordion/blob/master/test-resources/clj-concordion/expressions/Expressions.md) for details.
 
 #### Options
 
