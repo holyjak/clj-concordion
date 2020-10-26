@@ -85,11 +85,11 @@ The expressions are a subset & superset of EDN and thus:
 * Special handling of `'` and `#`: all `'` are replaced with `"` and all `#` are removed.
   This can conflict with test values that contain them - report an issue if it happens.
 
-See the [Expression specification](/holyjak/clj-concordion/blob/master/test-resources/clj-concordion/expressions/Expressions.md) for details.
+See the [Expression specification](/test-resources/clj-concordion/expressions/Expressions.md) for details.
 
 #### Options
 
-Notice that `deffixture` takes a second, optional parameter, a map of options - [see the `:cc/opts` Clojure spec for valid keys and values](/holyjak/clj-concordion/blob/master/src/clj_concordion/specs.clj) and
+Notice that `deffixture` takes a second, optional parameter, a map of options - [see the `:cc/opts` Clojure spec for valid keys and values](/src/clj_concordion/specs.clj) and
 Concordion [Fixture classes docs](https://concordion.org/coding/java/markdown/#fixture-classes) (->
 [FixtureDeclarations.java](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/FixtureDeclarations.java),
  [ConcordionOptions.java](https://github.com/concordion/concordion/blob/2.2.0/src/main/java/org/concordion/api/option/ConcordionOptions.java),
