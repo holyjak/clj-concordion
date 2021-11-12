@@ -1,7 +1,6 @@
 # clj-concordion
 
-Add support for Clojure and `clojure.test` to [Concordion](https://concordion.org/),
-a Specification By Example tool.
+Developer-friendly, simple BDD tests using Clojure and `clojure.test`, based on [Concordion](https://concordion.org/).
 
 With Concordion, you can write high-level description of features in Markdown
 and document them with data examples. Hidden instrumentation (in the form of magic links)
