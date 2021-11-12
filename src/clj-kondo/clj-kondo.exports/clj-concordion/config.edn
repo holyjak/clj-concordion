@@ -1,0 +1,1 @@
+{:lint-as {clj-concordion.core/deffixture clojure.core/def}}

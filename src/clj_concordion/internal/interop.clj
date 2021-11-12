@@ -213,6 +213,21 @@
   (symbol
     (cs/replace-first name #"^#" "")))
 
+(defn trim "nil and type safe string/trim" [s]
+  (cond-> s 
+    (string? s) cs/trim))
+
+(defn evaluator-set-variable [vars opts name value]
+  (let [value' (cond
+                 ;; Handle the special #ROW var. made by Concordion for
+                 ;; the whole row of a table 
+                 (= name "#ROW") (into {}
+                                   (map (fn [[k v]] [k (trim v)]))
+                                   value)
+                 (:cc/no-trim? opts) value
+                 :else (trim value))]
+    (swap! vars assoc (concord-var->sym name) value')))
+
 (defn new-eval-factory []
   (reify EvaluatorFactory
     (createEvaluator [_ fixture]
@@ -224,12 +239,7 @@
         (assert (var? fix-var) "Fixture object must be a Clojure var")
         (reify Evaluator
           (getVariable [_ name] (get @vars (concord-var->sym name)))
-          (setVariable [_ name value]
-            (swap! vars assoc
-                   (concord-var->sym name)
-                   (if (:cc/no-trim? opts)
-                     value
-                     (some-> value clojure.string/trim))))
+          (setVariable [_ name value] (evaluator-set-variable vars opts name value))
           (evaluate [_ expr]
             (try
               (evaluate vars ns expr)
