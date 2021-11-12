@@ -251,6 +251,7 @@ lein with-profile test auto test
 ### Deployment
 
 ```
+# ! Update CHANGELOG.md !
 # Ensure credentials unlocked
 gpg --quiet --batch --decrypt ~/.lein/credentials.clj.gpg
 # Deploy
