@@ -1,15 +1,23 @@
 # clj-concordion
 
-Add support for Clojure and `clojure.test` to  [Concordion](https://concordion.org/),
+Add support for Clojure and `clojure.test` to [Concordion](https://concordion.org/),
 a Specification By Example tool.
 
-With Concordion, you can write high-level specification of features in Markdown
-and document them with examples. Hidden instrumentation (in the form of magic links)
-binds the examples to functions in your Fixture classes making it possible to verify
-them against the code. When you run your test runner, Concordion does generate
-HTML files incorporating results of the passed or failed examples/tests.
+With Concordion, you can write high-level description of features in Markdown
+and document them with data examples. Hidden instrumentation (in the form of magic links)
+binds the examples to functions in your Fixture classes (or rather Clojure test namespaces,
+in the case of clj-concordion) making it possible to verify
+them against the code. When you run your test runner, Concordion also generates
+HTML files incorporating results of the passed or failed examples/tests, which you
+can publish for the business audience of your code.
 
 ![](https://concordion.org/img/how-it-works-markdown.png)
+
+Concordion is very simple and is quite limited at what you can do in the .md files. That is IMO a very good thing. All the logic should be in code, the specifications only supply inputs, outputs, and simple test predicates.
+
+I will not explain why to write Specification By Example (~ Behavior-Driven Development, BDD)
+tests and how to do that because the [Concordion site](https://concordion.org/) does a great
+job of that. I highly recommend that you check it out first. If you want to see how it works in Clojure, have a look at the [Coding section](#coding) below.
 
 ## Usage
 
@@ -25,13 +33,29 @@ Add a dependency on this project (copy the [latest dependency specification for 
 
 ### Coding
 
-Given the Concordion specification `<class path>/math/Addition.md` containing:
+We start by writing a Concordion specification, such as `<class path>/math/Addition.md` containing the specification of a feature, with examples:
 
 ```markdown
+# Addition
+
+Adding numbers follows the rules of math.
+
+### Examples
+
 Adding [1](- "#n1") and [3](- "#n2") yields [4](- "?=add(#n1, #n2)").
 ```
 
-you need to implement the function in a test namespace of a matching name (plus `-test`) and define the fixture for it:
+The last line would render as 
+
+> Adding [1](- "#n1") and [3](- "#n2") yields [4](- "?=add(#n1, #n2)").
+
+or rather, with indication of the success:
+
+> Adding [1](- "#n1") and [3](- "#n2") yields <span style="background-color: #afa">4</span>.
+
+NOTE: The [Concordion Instrumenting docs](https://concordion.org/instrumenting/java/markdown/) explain how these "magical" links work so only a brief summary: `1` and `3` are stored into the "variables" `#n1` and `#n2` and then we verify that `4` equals to the result of calling the function `add` with these arguments. 
+
+So you need to implement the function `add` in a test namespace with a clj-concordion _fixture_. The name of the ns needs to match the directory of the .md specification + `-test` (here: `math/` -> `math-test`) and it needs to `(deffixture <name of the md file>)`, as we see below:
 
 ```clojure
 (ns math-test
@@ -39,20 +63,26 @@ you need to implement the function in a test namespace of a matching name (plus 
       [clojure.test :refer :all]
       [clj-concordion.core :as cc]))
 
-; The arguments are always Strings
+; The arguments are always *Strings*
 (defn add [n1 n2]
   (int (+ (Integer/parseInt n1) (Integer/parseInt n2))))
 
 ;; Create the fixture class and clojure.test test.
 ;; Notice that the name of the ns and fixture corresponds to the path to the specification
 ;; .md (excluding the "-test" suffix of the ns)
+;; We could define multiple fixtures here, if we have more .md files under math/.
+;; (so make sure they don't use the same fn name + arity without being happy to
+;; share the same implementation)
 (cc/deffixture Addition)
 
 ;; Ensure Concordion is reset between each run (when running repeatedly via REPL)
 (use-fixtures :once cc/cljtest-reset-concordion)
 ```
 
-And run it:
+(You can explore clj-concordion's own [.md specs](./test-resources)
+and the corresponding [fixture code](./test).)
+
+Now run the tests:
 
 ```bash
 $ lein with-profile auto test
@@ -64,6 +94,8 @@ Successes: 1, Failures: 0
 Ran 1 tests containing 0 assertions.
 0 failures, 0 errors.
 ```
+
+You can open the .html file to see the .md file rendered with results of the tests.
 
 #### Deviation from Concordion
 
