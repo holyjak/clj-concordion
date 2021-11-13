@@ -22,6 +22,8 @@ job of that. I highly recommend that you check it out first. If you want to see 
 
 Docs: [![cljdoc badge](https://cljdoc.org/badge/clj-concordion/clj-concordion)](https://cljdoc.org/d/clj-concordion/clj-concordion/CURRENT)
 
+TIP: clj-concordion exports [clj-kondo config for you to import](https://github.com/clj-kondo/clj-kondo/blob/master/doc/config.md#exporting-and-importing-configuration) so that Kondo understands its macro.
+
 ### Preparation
 
 Add a dependency on this project (copy the [latest dependency specification for Lein/Boot/deps.edn/Gradle/Maven from Clojars](https://clojars.org/clj-concordion)):

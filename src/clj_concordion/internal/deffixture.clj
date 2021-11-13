@@ -1,4 +1,4 @@
-(ns clj-concordion.internal.deffixture
+(ns ^:no-doc clj-concordion.internal.deffixture
   (:require
     [clj-concordion.internal.run :refer :all]
     [clj-concordion.internal.utils :refer :all]

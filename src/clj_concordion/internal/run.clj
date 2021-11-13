@@ -1,4 +1,4 @@
-(ns clj-concordion.internal.run
+(ns ^:no-doc clj-concordion.internal.run
   (:require
     [clj-concordion.internal.utils :refer :all]
     [clj-concordion.internal.interop :refer :all]

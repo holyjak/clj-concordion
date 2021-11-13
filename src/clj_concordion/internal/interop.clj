@@ -1,4 +1,4 @@
-(ns clj-concordion.internal.interop
+(ns ^:no-doc clj-concordion.internal.interop
   (:require
     [clj-concordion.specs :as specs]
     [clojure.edn :as edn]

@@ -1,4 +1,4 @@
-(ns clj-concordion.internal.utils)
+(ns ^:no-doc clj-concordion.internal.utils)
 
 (defn arg->type [arg]
   {:pre [(symbol? arg)]}

@@ -1,5 +1,6 @@
 # Changelog
 
+* 2.1.3 - improve CljDoc support, document import of the clj-kondo config
 * 2.1.2 - fix clj-kondo export
 * 2.1.1 - add clj-kondo export
 * 2.1.0 - upgrade to Concordion 3.1, support its `#ROW` var
